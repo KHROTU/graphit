@@ -5,14 +5,6 @@ import { getAllDiagrams } from '@/lib/content';
 import RatingWidget from '@/components/shared/RatingWidget';
 import ViewTracker from '@/components/shared/ViewTracker';
 
-interface DiagramPageProps {
-  params: {
-    level: string;
-    subject: string;
-    diagram: string;
-  };
-}
-
 function formatLevelName(levelId: string): string {
   if (levelId === 'a-level') return 'A-Level';
   return levelId.toUpperCase();
@@ -23,7 +15,7 @@ async function getDiagramDetails(level: string, subject: string, diagram: string
   return allDiagrams.find(d => d.level === level && d.subject === subject && d.diagram === diagram) || null;
 }
 
-export default async function DiagramPage({ params }: DiagramPageProps) {
+export default async function DiagramPage({ params }: { params: { level: string; subject: string; diagram: string } }) {
   const { level, subject, diagram } = params;
   const diagramDetails = await getDiagramDetails(level, subject, diagram);
 
