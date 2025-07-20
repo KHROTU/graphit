@@ -24,7 +24,8 @@ async function getDiagramDetails(level: string, subject: string, diagram: string
 }
 
 export default async function DiagramPage({ params }: DiagramPageProps) {
-  const diagramDetails = await getDiagramDetails(params.level, params.subject, params.diagram);
+  const { level, subject, diagram } = params;
+  const diagramDetails = await getDiagramDetails(level, subject, diagram);
 
   if (!diagramDetails) {
     notFound();
@@ -32,8 +33,8 @@ export default async function DiagramPage({ params }: DiagramPageProps) {
 
   const breadcrumbs = [
     { name: 'Home', href: '/' },
-    { name: formatLevelName(params.level), href: `/topics#${params.level}` },
-    { name: params.subject.charAt(0).toUpperCase() + params.subject.slice(1), href: `/topics#${params.level}-${params.subject}` },
+    { name: formatLevelName(level), href: `/topics#${level}` },
+    { name: subject.charAt(0).toUpperCase() + subject.slice(1), href: `/topics#${level}-${subject}` },
     { name: diagramDetails.name, href: '#' },
   ];
 
@@ -62,7 +63,7 @@ export default async function DiagramPage({ params }: DiagramPageProps) {
                 </span>
             )}
         </div>
-        <DiagramTool diagramId={params.diagram} />
+        <DiagramTool diagramId={diagram} />
       </div>
       <ViewTracker diagramId={diagramDetails.id} />
       <RatingWidget diagramId={diagramDetails.id} />
