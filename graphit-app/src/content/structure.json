@@ -1,0 +1,507 @@
+[
+  {
+    "levelId": "igcse",
+    "levelName": "IGCSE",
+    "description": "International General Certificate of Secondary Education",
+    "subjects": [
+      {
+        "subjectId": "economics",
+        "subjectName": "Economics (0455)",
+        "topics": [
+          {
+            "topicId": "supply-demand",
+            "topicName": "Demand and Supply Curves",
+            "diagrams": [
+              {
+                "diagramId": "supply-demand-graph",
+                "description": "Model resource allocation with supply and demand curves.",
+                "previewImage": "/previews/supply-demand-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "ppc",
+            "topicName": "Production Possibility Curves",
+            "diagrams": [
+              {
+                "diagramId": "production-possibility-curve",
+                "description": "Visualize scarcity, choice, and economic growth.",
+                "previewImage": "/previews/production-possibility-curve.png"
+              }
+            ]
+          },
+          {
+            "topicId": "market-failure",
+            "topicName": "Market Failure & Interventions",
+            "diagrams": [
+              {
+                "diagramId": "market-failure-graph",
+                "description": "Model externalities and the effects of government taxes.",
+                "previewImage": "/previews/market-failure-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "firm-costs",
+            "topicName": "Firm's Cost & Revenue Curves",
+            "diagrams": [
+              {
+                "diagramId": "cost-revenue-graph",
+                "description": "Analyze a firm's costs, revenue, and profit maximization.",
+                "previewImage": "/previews/cost-revenue-graph.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "geography",
+        "subjectName": "Geography (0460)",
+        "topics": [
+          {
+            "topicId": "population",
+            "topicName": "Population Pyramids",
+            "diagrams": [
+              {
+                "diagramId": "population-pyramid",
+                "description": "Visualize the age and sex structure of a population.",
+                "previewImage": "/previews/population-pyramid.png"
+              }
+            ]
+          },
+          {
+            "topicId": "environment",
+            "topicName": "Climate Graphs",
+            "diagrams": [
+              {
+                "diagramId": "climate-graph",
+                "description": "Compare temperature and precipitation data for different biomes.",
+                "previewImage": "/previews/climate-graph.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "biology",
+        "subjectName": "Biology (0610)",
+        "topics": [
+          {
+            "topicId": "classification",
+            "topicName": "Dichotomous Key Builder",
+            "diagrams": [
+              {
+                "diagramId": "dichotomous-key",
+                "description": "Build a branching key to identify different organisms.",
+                "previewImage": "/previews/dichotomous-key.png"
+              }
+            ]
+          },
+          {
+            "topicId": "inheritance",
+            "topicName": "Punnett Square Calculator",
+            "diagrams": [
+              {
+                "diagramId": "punnett-square",
+                "description": "Predict the outcome of a monohybrid genetic cross.",
+                "previewImage": "/previews/punnett-square.png"
+              }
+            ]
+          },
+          {
+            "topicId": "environment",
+            "topicName": "Ecological Diagrams",
+            "diagrams": [
+              {
+                "diagramId": "ecology-diagrams",
+                "description": "Model food webs and pyramids of numbers and biomass.",
+                "previewImage": "/previews/ecology-diagrams.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "chemistry",
+        "subjectName": "Chemistry (0620)",
+        "topics": [
+          {
+            "topicId": "states-of-matter",
+            "topicName": "Gas Law Simulator (P vs T)",
+            "diagrams": [
+              {
+                "diagramId": "gas-law-graph",
+                "description": "Explore the relationship between pressure and temperature of gases.",
+                "previewImage": "/previews/gas-law-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "stoichiometry",
+            "topicName": "Titration Curve Plotter",
+            "diagrams": [
+              {
+                "diagramId": "titration-curve",
+                "description": "Plot the pH change during an acid-base titration.",
+                "previewImage": "/previews/titration-curve.png"
+              }
+            ]
+          },
+          {
+            "topicId": "energetics",
+            "topicName": "Energy Profile Diagrams",
+            "diagrams": [
+              {
+                "diagramId": "energy-profile-diagram",
+                "description": "Visualize activation energy and enthalpy change in reactions.",
+                "previewImage": "/previews/energy-profile-diagram.png"
+              }
+            ]
+          },
+          {
+            "topicId": "kinetics",
+            "topicName": "Reaction Rate Graph",
+            "diagrams": [
+              {
+                "diagramId": "reaction-rate-graph",
+                "description": "Graph concentration changes over time for chemical reactions.",
+                "previewImage": "/previews/reaction-rate-graph.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "physics",
+        "subjectName": "Physics (0625)",
+        "topics": [
+          {
+            "topicId": "motion",
+            "topicName": "Motion Graph Generator",
+            "diagrams": [
+              {
+                "diagramId": "motion-graph",
+                "description": "Create and analyze distance-time and velocity-time graphs.",
+                "previewImage": "/previews/motion-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "radioactivity",
+            "topicName": "Radioactive Decay Simulator",
+            "diagrams": [
+              {
+                "diagramId": "radioactive-decay-graph",
+                "description": "Model exponential decay and understand the concept of half-life.",
+                "previewImage": "/previews/radioactive-decay-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "electricity",
+            "topicName": "Circuit Builder",
+            "diagrams": [
+              {
+                "diagramId": "circuit-diagram",
+                "description": "Build and analyze simple series and parallel circuits.",
+                "previewImage": "/previews/circuit-diagram.png"
+              }
+            ]
+          },
+          {
+            "topicId": "waves",
+            "topicName": "Doppler Effect Simulator",
+            "diagrams": [
+              {
+                "diagramId": "doppler-effect-sound",
+                "description": "Visualize how wave frequency changes with a moving source.",
+                "previewImage": "/previews/doppler-effect-sound.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "mathematics",
+        "subjectName": "Mathematics (0580)",
+        "topics": [
+          {
+            "topicId": "algebra-graphs",
+            "topicName": "Function Plotter",
+            "diagrams": [
+              {
+                "diagramId": "function-graph",
+                "description": "Plot linear, quadratic, cubic, and trigonometric functions.",
+                "previewImage": "/previews/function-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "statistics",
+            "topicName": "Statistical Chart Builder",
+            "diagrams": [
+              {
+                "diagramId": "statistical-chart",
+                "description": "Create bar charts, pie charts, and histograms from data.",
+                "previewImage": "/previews/statistical-chart.png"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "levelId": "a-level",
+    "levelName": "AS/A Level",
+    "description": "Advanced Subsidiary & Advanced Level",
+    "subjects": [
+      {
+        "subjectId": "economics",
+        "subjectName": "Economics (9708)",
+        "topics": [
+          {
+            "topicId": "adas",
+            "topicName": "Aggregate Demand & Supply",
+            "diagrams": [
+              {
+                "diagramId": "ad-as-diagram",
+                "levelTag": "A-Level",
+                "description": "Model the macroeconomy with aggregate demand and supply.",
+                "previewImage": "/previews/ad-as-diagram.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "biology",
+        "subjectName": "Biology (9700)",
+        "topics": [
+          {
+            "topicId": "enzymes",
+            "topicName": "Enzyme Kinetics Graph",
+            "diagrams": [
+              {
+                "diagramId": "enzyme-kinetics-graph",
+                "levelTag": "AS",
+                "description": "Investigate factors affecting the rate of enzyme activity.",
+                "previewImage": "/previews/enzyme-kinetics-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "transport-mammals",
+            "topicName": "Oxygen Dissociation Curve",
+            "diagrams": [
+              {
+                "diagramId": "oxygen-dissociation-curve",
+                "levelTag": "AS",
+                "description": "Model hemoglobin saturation and the Bohr shift.",
+                "previewImage": "/previews/oxygen-dissociation-curve.png"
+              }
+            ]
+          },
+          {
+            "topicId": "transport-plants",
+            "topicName": "Water Potential Calculator",
+            "diagrams": [
+              {
+                "diagramId": "water-potential-calculator",
+                "levelTag": "AS",
+                "description": "Calculate and visualize water potential in plant tissues.",
+                "previewImage": "/previews/water-potential-calculator.png"
+              }
+            ]
+          },
+          {
+            "topicId": "cell-structure",
+            "topicName": "Microscopy Calculations",
+            "diagrams": [
+              {
+                "diagramId": "microscopy-calculator",
+                "levelTag": "AS",
+                "description": "Use the I=AM formula to calculate magnification and size.",
+                "previewImage": "/previews/microscopy-calculator.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "chemistry",
+        "subjectName": "Chemistry (9701)",
+        "topics": [
+          {
+            "topicId": "periodicity",
+            "topicName": "Periodic Trends Grapher",
+            "diagrams": [
+              {
+                "diagramId": "periodic-trends-graph",
+                "levelTag": "AS",
+                "description": "Plot Ionisation Energy, Atomic Radius, and Electronegativity.",
+                "previewImage": "/previews/periodic-trends-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "energetics",
+            "topicName": "Chemical Energetics",
+            "diagrams": [
+              {
+                "diagramId": "energy-profile-diagram",
+                "levelTag": "AS",
+                "description": "Model reaction pathways, activation energy and Hess's Law cycles.",
+                "previewImage": "/previews/energy-profile-diagram.png"
+              }
+            ]
+          },
+          {
+            "topicId": "equilibria",
+            "topicName": "Acid-Base Titration Curves",
+            "diagrams": [
+              {
+                "diagramId": "titration-curve",
+                "levelTag": "AS",
+                "description": "Simulate titrations between strong/weak acids and bases.",
+                "previewImage": "/previews/titration-curve.png"
+              }
+            ]
+          },
+          {
+            "topicId": "kinetics",
+            "topicName": "Reaction Kinetics Simulator",
+            "diagrams": [
+              {
+                "diagramId": "kinetics-graph",
+                "levelTag": "AS",
+                "description": "Plot reaction rates and Boltzmann distribution curves.",
+                "previewImage": "/previews/kinetics-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "matter",
+            "topicName": "Ideal Gas Law Simulator",
+            "diagrams": [
+              {
+                "diagramId": "gas-law-graph",
+                "levelTag": "AS",
+                "description": "Explore the relationships between P, V, n, and T for ideal gases.",
+                "previewImage": "/previews/gas-law-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "analysis",
+            "topicName": "Analytical Spectroscopy",
+            "diagrams": [
+              {
+                "diagramId": "spectroscopy-tool",
+                "levelTag": "A-Level",
+                "description": "Analyse Infrared (IR) and Mass Spectrometry data.",
+                "previewImage": "/previews/spectroscopy-tool.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "physics",
+        "subjectName": "Physics (9702)",
+        "topics": [
+          {
+            "topicId": "kinematics",
+            "topicName": "Motion Graphs",
+            "diagrams": [
+              {
+                "diagramId": "motion-graph",
+                "levelTag": "AS",
+                "description": "Analyze s-t, v-t, and a-t graphs for uniform motion.",
+                "previewImage": "/previews/motion-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "dynamics",
+            "topicName": "Projectile Motion & Energy",
+            "diagrams": [
+              {
+                "diagramId": "projectile-motion-graph",
+                "levelTag": "AS",
+                "description": "Simulate projectile trajectories and energy conservation.",
+                "previewImage": "/previews/projectile-motion-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "circuits",
+            "topicName": "D.C. Circuit Builder",
+            "diagrams": [
+              {
+                "diagramId": "circuit-diagram",
+                "levelTag": "AS",
+                "description": "Solve circuits with internal resistance and potential dividers.",
+                "previewImage": "/previews/circuit-diagram.png"
+              }
+            ]
+          },
+          {
+            "topicId": "superposition",
+            "topicName": "Waves & Superposition",
+            "diagrams": [
+              {
+                "diagramId": "doppler-effect-sound",
+                "levelTag": "AS",
+                "description": "Visualize the Doppler Effect, interference, and diffraction.",
+                "previewImage": "/previews/doppler-effect-sound.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "mathematics",
+        "subjectName": "Mathematics (9709)",
+        "topics": [
+          {
+            "topicId": "functions",
+            "topicName": "Advanced Function Plotter",
+            "diagrams": [
+              {
+                "diagramId": "function-graph",
+                "levelTag": "A-Level",
+                "description": "Plot functions, transformations, composites, and inverses.",
+                "previewImage": "/previews/function-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "calculus",
+            "topicName": "Numerical Integration",
+            "diagrams": [
+              {
+                "diagramId": "numerical-integration-graph",
+                "levelTag": "A-Level",
+                "description": "Visualize and calculate approximations using the Trapezium Rule.",
+                "previewImage": "/previews/numerical-integration-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "statistics",
+            "topicName": "Scatter Diagrams & Regression",
+            "diagrams": [
+              {
+                "diagramId": "linear-regression-graph",
+                "levelTag": "AS",
+                "description": "Plot bivariate data and calculate the line of best fit.",
+                "previewImage": "/previews/linear-regression-graph.png"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

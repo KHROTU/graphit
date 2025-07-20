@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #FFF8E1;
+  --color-text: #2F4F4F;
+  --color-accent: #006D77;
+  --color-accent-hover: #005259;
+  --color-secondary: #FF6F61;
+  --color-secondary-hover: #e65a4c;
+  --color-neutral: #F8F9FA;
+  --color-neutral-dark: #E8ECEF;
+  --color-text-inverted: #FFFFFF;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --border-radius-apple: 1.25rem;
+  --animation-fadeIn: fadeIn 0.5s ease-in-out;
+
+  --keyframes-fadeIn: {
+    '0%': { opacity: 0, transform: translateY(10px) },
+    '100%': { opacity: 1, transform: translateY(0) },
+  };
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text font-sans;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .dark {
+    --color-background: #1a1a1a;
+    --color-text: #E8ECEF;
+    --color-accent: #38bdf8;
+    --color-accent-hover: #0ea5e9;
+    --color-secondary: #f87171;
+    --color-secondary-hover: #ef4444;
+    --color-neutral: #2a2a2a;
+    --color-neutral-dark: #3a3a3a;
+    --color-text-inverted: #1a1a1a;
+  }
+
+  .squircle {
+    clip-path: inset(0% 0% 0% 0% round 30%);
+  }
+}
