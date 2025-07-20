@@ -6,8 +6,8 @@ import RatingWidget from '@/components/shared/RatingWidget';
 import ViewTracker from '@/components/shared/ViewTracker';
 
 type PageProps = {
-  params: { level: string; subject: string; diagram: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
+  params: Promise<{ level: string; subject: string; diagram: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 function formatLevelName(levelId: string): string {
@@ -21,7 +21,8 @@ async function getDiagramDetails(level: string, subject: string, diagram: string
 }
 
 export default async function DiagramPage({ params }: PageProps) {
-  const { level, subject, diagram } = params;
+  const { level, subject, diagram } = await params;
+  
   const diagramDetails = await getDiagramDetails(level, subject, diagram);
 
   if (!diagramDetails) {
