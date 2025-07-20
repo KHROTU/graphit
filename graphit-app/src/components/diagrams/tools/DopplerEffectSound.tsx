@@ -1,4 +1,3 @@
-// TBD: fix ts warnings and overhaul to recharts
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -9,6 +8,26 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Play, Pause, Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
+import { useSession } from '@/lib/hooks/useSession';
+import SaveGraphButton from '@/components/shared/SaveGraphButton';
+
+type SourceShape = 'ambulance' | 'rectangle';
+
+interface DopplerProps {
+  initialWaveCount?: number;
+  initialWaveSpacing?: number;
+  initialSourceVelocity?: number;
+  initialSourceShape?: SourceShape;
+  initialPosition?: number;
+}
+
+interface DopplerDiagramProps {
+  waveCount: number;
+  waveSpacing: number;
+  sourceVelocity: number;
+  sourceShape: SourceShape;
+  position: number;
+}
 
 const AmbulanceShape = () => (
   <g transform="scale(1.5) translate(-12, -12)">
@@ -16,9 +35,9 @@ const AmbulanceShape = () => (
   </g>
 );
 const RectangleShape = () => <rect x="-30" y="-15" width="60" height="30" fill="var(--color-text)" />;
-const sourceShapes: { [key: string]: React.FC } = { ambulance: AmbulanceShape, rectangle: RectangleShape };
+const sourceShapes: { [key in SourceShape]: React.FC } = { ambulance: AmbulanceShape, rectangle: RectangleShape };
 
-const DopplerDiagram = ({ waveCount, waveSpacing, sourceVelocity, sourceShape, position }: any) => {
+const DopplerDiagram = ({ waveCount, waveSpacing, sourceVelocity, sourceShape, position }: DopplerDiagramProps) => {
   const SourceComponent = sourceShapes[sourceShape] || RectangleShape;
   const soundVelocity = 50;
   return (
@@ -37,16 +56,18 @@ const DopplerDiagram = ({ waveCount, waveSpacing, sourceVelocity, sourceShape, p
   );
 };
 
-export default function DopplerEffectSound() {
-  const [waveCount, setWaveCount] = useState(10);
-  const [waveSpacing, setWaveSpacing] = useState(20);
-  const [sourceVelocity, setSourceVelocity] = useState(25);
-  const [sourceShape, setSourceShape] = useState('ambulance');
-  const [position, setPosition] = useState(50);
+export default function DopplerEffectSound(props: DopplerProps) {
+  const [waveCount, setWaveCount] = useState(props.initialWaveCount || 10);
+  const [waveSpacing, setWaveSpacing] = useState(props.initialWaveSpacing || 20);
+  const [sourceVelocity, setSourceVelocity] = useState(props.initialSourceVelocity || 25);
+  const [sourceShape, setSourceShape] = useState<SourceShape>(props.initialSourceShape || 'ambulance');
+  const [position, setPosition] = useState(props.initialPosition || 50);
   const [isPlaying, setIsPlaying] = useState(false);
-  const animationFrameId = useRef<number | undefined>();
+  
+  const animationFrameId = useRef<number | undefined>(undefined);
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
+  const { session } = useSession();
 
   useEffect(() => {
     if (isPlaying) {
@@ -59,6 +80,14 @@ export default function DopplerEffectSound() {
     return () => { if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current); };
   }, [isPlaying, sourceVelocity]);
 
+  const getDiagramState = () => ({
+    initialWaveCount: waveCount,
+    initialWaveSpacing: waveSpacing,
+    initialSourceVelocity: sourceVelocity,
+    initialSourceShape: sourceShape,
+    initialPosition: position,
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       <div className="md:col-span-1">
@@ -70,23 +99,22 @@ export default function DopplerEffectSound() {
             <div><Label>Source Velocity ({sourceVelocity})</Label><input type="range" min="-45" max="45" value={sourceVelocity} onChange={(e) => setSourceVelocity(parseInt(e.target.value))} className="w-full mt-2" /></div>
             <div><Label>Number of Waves</Label><Input type="number" min="5" max="50" value={waveCount} onChange={(e) => setWaveCount(Math.max(5, parseInt(e.target.value) || 5))} className="mt-2" /></div>
             <div><Label>Wave Spacing ({waveSpacing}px)</Label><input type="range" min="10" max="50" value={waveSpacing} onChange={(e) => setWaveSpacing(parseInt(e.target.value))} className="w-full mt-2" /></div>
-            <div><Label>Source Shape</Label><Select value={sourceShape} onChange={(e) => setSourceShape(e.target.value)} className="mt-2"><option value="ambulance">Ambulance</option><option value="rectangle">Rectangle</option></Select></div>
-            <Button onClick={() => openExportModal(diagramContainerRef, 'doppler-effect')} className="w-full !mt-8">
-              <Save className="mr-2 h-4 w-4" /> Save & Export
-            </Button>
+            <div><Label>Source Shape</Label><Select value={sourceShape} onChange={(e) => setSourceShape(e.target.value as SourceShape)} className="mt-2"><option value="ambulance">Ambulance</option><option value="rectangle">Rectangle</option></Select></div>
+            <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
+                <Button onClick={() => openExportModal(diagramContainerRef, 'doppler-effect-sound')}>
+                  <Save className="mr-2 h-4 w-4" /> Save & Export Image
+                </Button>
+                {session?.isLoggedIn && (
+                  <SaveGraphButton diagramName="Doppler Effect Simulator" getDiagramState={getDiagramState} />
+                )}
+            </div>
           </div>
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px] md:min-h-0">
         <Card className="h-full !p-2">
           <div ref={diagramContainerRef} data-testid="diagram-container">
-            <DopplerDiagram 
-              waveCount={waveCount} 
-              waveSpacing={waveSpacing} 
-              sourceVelocity={sourceVelocity} 
-              sourceShape={sourceShape} 
-              position={position} 
-            />
+            <DopplerDiagram {...{ waveCount, waveSpacing, sourceVelocity, sourceShape, position }} />
           </div>
         </Card>
       </div>

@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useSession } from '@/lib/hooks/useSession';
-import SaveGraphButton from '@/components/shared/SaveGraphButton';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 const defaultData = `Category,Value\nApples,12\nOranges,19\nBananas,3\nGrapes,5\nPears,2`;
