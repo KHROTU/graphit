@@ -8,7 +8,7 @@ import type { Metadata, ResolvingMetadata } from 'next';
 
 type PageProps = {
   params: Promise<{ level: string; subject: string; diagram: string }>;
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 async function getDiagramDetails(level: string, subject: string, diagram: string) {
