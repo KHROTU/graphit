@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Settings, Image as ImageIcon, LogOut } from 'lucide-react';
+import { Settings, Image as ImageIcon, LogOut, Info } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
 
 export default function AccountNav({ username }: { username: string }) {
@@ -20,6 +20,7 @@ export default function AccountNav({ username }: { username: string }) {
   const navItems = [
     { href: '/account', label: 'Settings', icon: Settings },
     { href: '/account/saved', label: 'Saved Graphs', icon: ImageIcon },
+    { href: '/account/info', label: 'Info', icon: Info },
   ];
 
   return (
