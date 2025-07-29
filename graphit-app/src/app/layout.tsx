@@ -16,8 +16,34 @@ const geistSans = GeistSans;
 const geistMono = GeistMono;
 
 export const metadata: Metadata = {
-  title: "GraphIt! - Educational Diagram Creation Platform",
-  description: "Create and customize diagrams across different academic levels and subjects.",
+  metadataBase: new URL('https://www.graphit.dev'),
+  title: {
+    default: "GraphIt! - Educational Diagram Creation Platform",
+    template: "%s | GraphIt!",
+  },
+  description: "Create and customize beautiful, accurate educational diagrams for IGCSE and A-Level subjects like Economics, Biology, Chemistry, and Physics.",
+  keywords: ["diagram tool", "graph maker", "IGCSE", "A-Level", "education", "science diagrams", "economics graphs", "chart builder"],
+  openGraph: {
+    title: "GraphIt! - Educational Diagram Creation Platform",
+    description: "Create and customize diagrams across different academic levels and subjects.",
+    url: 'https://www.graphit.dev',
+    siteName: 'GraphIt!',
+    images: [
+      {
+        url: '/logo-dark.svg',
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "GraphIt! - Educational Diagram Creation Platform",
+    description: "Create and customize diagrams across different academic levels and subjects.",
+    images: ['/logo-dark.svg'],
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
