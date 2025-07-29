@@ -30,9 +30,10 @@ export const metadata: Metadata = {
     siteName: 'GraphIt!',
     images: [
       {
-        url: '/logo-dark.svg',
+        url: '/social/default-og-image.png',
         width: 1200,
         height: 630,
+        alt: 'GraphIt! - Educational Diagram Creation Platform',
       },
     ],
     locale: 'en_US',
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "GraphIt! - Educational Diagram Creation Platform",
     description: "Create and customize diagrams across different academic levels and subjects.",
-    images: ['/logo-dark.svg'],
+    images: ['/social/default-og-image.png'],
   },
 };
 
