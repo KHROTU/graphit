@@ -10,6 +10,7 @@ import SearchOverlay from "@/components/shared/SearchOverlay";
 import { getAllDiagrams } from "@/lib/content";
 import { SessionProvider } from "@/lib/context/SessionContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -40,6 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </SessionProvider>
         </ThemeProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
