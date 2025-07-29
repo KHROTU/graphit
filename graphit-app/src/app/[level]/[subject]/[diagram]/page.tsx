@@ -7,7 +7,7 @@ import ViewTracker from '@/components/shared/ViewTracker';
 import type { Metadata, ResolvingMetadata } from 'next';
 
 type PageProps = {
-  params: { level: string; subject: string; diagram: string };
+  params: Promise<{ level: string; subject: string; diagram: string }>;
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
@@ -17,7 +17,7 @@ async function getDiagramDetails(level: string, subject: string, diagram: string
 }
 
 export async function generateMetadata({ params }: PageProps, parent: ResolvingMetadata): Promise<Metadata> {
-  const { level, subject, diagram } = params;
+  const { level, subject, diagram } = await params;
   const diagramDetails = await getDiagramDetails(level, subject, diagram);
 
   if (!diagramDetails) {
@@ -63,7 +63,7 @@ function formatLevelName(levelId: string): string {
 }
 
 export default async function DiagramPage({ params }: PageProps) {
-  const { level, subject, diagram } = params;
+  const { level, subject, diagram } = await params;
   
   const diagramDetails = await getDiagramDetails(level, subject, diagram);
 
