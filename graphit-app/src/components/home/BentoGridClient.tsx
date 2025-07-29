@@ -29,12 +29,12 @@ const BentoCard = ({ diagram, className }: { diagram: Diagram, className?: strin
         whileHover={{ scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
         className="h-full"
       >
-        <Card className="h-full flex flex-col justify-between p-6 group transition-colors duration-200 hover:bg-neutral-dark/50">
+        <Card className="h-full flex flex-col justify-between p-6 group transition-colors duration-200 hover:bg-neutral-dark/50 min-h-48">
           <div>
             <Icon className="w-8 h-8 mb-4 text-text/50" />
             <h3 className="font-bold text-lg text-text/90">{diagram.name}</h3>
           </div>
-          <div className="flex items-center text-sm font-medium text-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center text-sm font-medium text-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
             View Tool
             <ArrowRight className="ml-2 h-4 w-4" />
           </div>
@@ -45,7 +45,7 @@ const BentoCard = ({ diagram, className }: { diagram: Diagram, className?: strin
 };
 
 export default function BentoGridClient({ diagrams }: { diagrams: Diagram[] }) {
-  if (!diagrams || diagrams.length < 6) {
+  if (!diagrams || diagrams.length < 5) {
     return <p className="text-center text-text/50">Could not load featured tools.</p>;
   }
 
@@ -55,7 +55,7 @@ export default function BentoGridClient({ diagrams }: { diagrams: Diagram[] }) {
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       transition={{ staggerChildren: 0.1 }}
-      className="grid grid-cols-1 md:grid-cols-3 grid-rows-3 gap-4 md:h-[600px]"
+      className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-3 gap-4 md:h-[600px]"
     >
       <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="md:col-span-2 md:row-span-2">
         <BentoCard diagram={diagrams[0]} className="h-full" />

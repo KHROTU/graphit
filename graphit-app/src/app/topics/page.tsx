@@ -14,10 +14,10 @@ export default async function TopicsPage() {
     <>
       <div className="py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
             Find Your Topic
           </h1>
-          <p className="mt-2 text-lg text-text/80">
+          <p className="mt-2 text-base md:text-lg text-text/80">
             Select a level, then a subject, then a topic to begin.
           </p>
         </div>

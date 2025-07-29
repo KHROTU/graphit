@@ -16,7 +16,7 @@ function shuffle<T>(array: T[]): T[] {
 export default async function BentoGrid() {
   const allDiagrams = await getAllDiagrams();
   
-  const selectedDiagrams = shuffle([...allDiagrams]).slice(0, 6).map(d => ({
+  const selectedDiagrams = shuffle([...allDiagrams]).slice(0, 5).map(d => ({
     name: d.name,
     subject: d.subject,
     href: `/${d.level}/${d.subject}/${d.diagram}`

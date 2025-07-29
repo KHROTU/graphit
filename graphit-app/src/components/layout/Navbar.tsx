@@ -1,13 +1,14 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { LogIn, Moon, Sun, Search, User, Loader2 } from 'lucide-react';
+import { LogIn, Moon, Sun, Search, User, Loader2, Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearch } from '@/lib/context/SearchContext';
 import { useSession } from '@/lib/hooks/useSession';
+import { usePathname } from 'next/navigation';
 
 const Logo = () => (
   <Link href="/" className="flex items-center space-x-2">
@@ -97,6 +98,12 @@ const AccountButton = () => {
 
 const Navbar = () => {
   const { openSearch } = useSearch();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-neutral/80 backdrop-blur-sm border-b border-neutral-dark/50">
@@ -117,9 +124,51 @@ const Navbar = () => {
             <Search className="h-5 w-5" />
           </Button>
           <ThemeToggle />
-          <AccountButton />
+          <div className="hidden sm:block">
+            <AccountButton />
+          </div>
+          <div className="sm:hidden">
+             <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="relative overflow-hidden w-10 h-10"
+                aria-label="Toggle mobile menu"
+            >
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                        key={isMobileMenuOpen ? 'close' : 'open'}
+                        initial={{ opacity: 0, rotate: -90 }}
+                        animate={{ opacity: 1, rotate: 0 }}
+                        exit={{ opacity: 0, rotate: 90 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                    </motion.div>
+                </AnimatePresence>
+             </Button>
+          </div>
         </div>
       </nav>
+
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+            <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="sm:hidden overflow-hidden"
+            >
+                <div className="flex flex-col space-y-2 p-4 border-t border-neutral-dark/30">
+                    <Link href="/topics" className="block p-3 rounded-lg hover:bg-neutral font-medium">Start Studying</Link>
+                    <Link href="/graphs" className="block p-3 rounded-lg hover:bg-neutral font-medium">General Graphs</Link>
+                    <div className="pt-2 border-t border-neutral-dark/30">
+                        <AccountButton />
+                    </div>
+                </div>
+            </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

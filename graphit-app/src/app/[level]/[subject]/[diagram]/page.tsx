@@ -53,10 +53,10 @@ export default async function DiagramPage({ params }: PageProps) {
             ))}
           </ol>
         </nav>
-        <div className="flex items-baseline gap-4 mb-8">
-            <h1 className="text-4xl font-extrabold tracking-tight">{diagramDetails.name}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-baseline gap-4 mb-8">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{diagramDetails.name}</h1>
             {diagramDetails.levelTag && (
-                <span className="px-4 py-1.5 text-base font-semibold rounded-full bg-accent/20 text-accent">
+                <span className="px-4 py-1.5 text-base font-semibold rounded-full bg-accent/20 text-accent self-start">
                     {diagramDetails.levelTag}
                 </span>
             )}
