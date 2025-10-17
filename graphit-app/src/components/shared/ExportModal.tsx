@@ -26,7 +26,7 @@ export default function ExportModal() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          urlPath: window.location.pathname,
+          urlPath: window.location.pathname + window.location.search,
           padding: padding,
         }),
       });

@@ -57,7 +57,7 @@ interface AnalyticsMap {
 
 async function fetchAnalytics(): Promise<AnalyticsMap> {
     try {
-        const res = await fetch(`${BACKEND_URL}/get-all-analytics`, { cache: 'no-store' });
+        const res = await fetch(`${BACKEND_URL}/get-all-analytics`, { next: { revalidate: 3600 } });
         if (res.ok) {
             return await res.json();
         }
