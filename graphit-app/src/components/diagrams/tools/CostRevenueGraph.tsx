@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
 import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+import { SliderControl } from '../controls/SliderControl';
 
 interface CostRevenueProps {
   initialFixedCost?: number;
@@ -16,15 +16,40 @@ interface CostRevenueProps {
   initialDemandPrice?: number;
 }
 
+type State = {
+    fixedCost: number;
+    variableCost: number;
+    demandPrice: number;
+};
+
+type Action = 
+    | { type: 'SET_FIXED_COST', payload: number }
+    | { type: 'SET_VARIABLE_COST', payload: number }
+    | { type: 'SET_DEMAND_PRICE', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_FIXED_COST': return { ...state, fixedCost: action.payload };
+        case 'SET_VARIABLE_COST': return { ...state, variableCost: action.payload };
+        case 'SET_DEMAND_PRICE': return { ...state, demandPrice: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (value: unknown): React.ReactNode => {
     if (typeof value === 'number') return Number(value.toFixed(2));
     return String(value);
 };
 
-export default function CostRevenueGraph({ initialFixedCost = 1000, initialVariableCost = 20, initialDemandPrice = 100 }: CostRevenueProps) {
-  const [fixedCost, setFixedCost] = useState(initialFixedCost);
-  const [variableCost, setVariableCost] = useState(initialVariableCost);
-  const [demandPrice, setDemandPrice] = useState(initialDemandPrice);
+export default function CostRevenueGraph(props: CostRevenueProps) {
+  const initialState: State = {
+      fixedCost: props.initialFixedCost || 1000,
+      variableCost: props.initialVariableCost || 20,
+      demandPrice: props.initialDemandPrice || 100,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { fixedCost, variableCost, demandPrice } = state;
+  
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -42,12 +67,8 @@ export default function CostRevenueGraph({ initialFixedCost = 1000, initialVaria
       
       chartData.push({ quantity: q, 'Total Revenue': totalRevenue, 'Total Cost': totalCost, Profit: profit });
 
-      if (profit >= 0 && breakEvenPoint.q === 0) {
-        breakEvenPoint = { q, val: totalRevenue };
-      }
-      if (profit > profitMaxPoint.profit) {
-        profitMaxPoint = { q, profit };
-      }
+      if (profit >= 0 && breakEvenPoint.q === 0) breakEvenPoint = { q, val: totalRevenue };
+      if (profit > profitMaxPoint.profit) profitMaxPoint = { q, profit };
     }
     return { data: chartData, breakEven: breakEvenPoint, profitMax: profitMaxPoint };
   }, [fixedCost, variableCost, demandPrice]);
@@ -64,9 +85,10 @@ export default function CostRevenueGraph({ initialFixedCost = 1000, initialVaria
         <Card>
           <CardHeader><CardTitle>{`Firm's Costs & Revenue`}</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div><Label>Fixed Cost: {fixedCost}</Label><input type="range" min="500" max="2000" step="100" value={fixedCost} onChange={(e) => setFixedCost(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Variable Cost (per unit): {variableCost}</Label><input type="range" min="10" max="50" step="2" value={variableCost} onChange={(e) => setVariableCost(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Max Price (Demand): {demandPrice}</Label><input type="range" min="80" max="150" step="5" value={demandPrice} onChange={(e) => setDemandPrice(Number(e.target.value))} className="w-full mt-2" /></div>
+              <SliderControl label="Fixed Cost" value={fixedCost} min={500} max={2000} step={100} onChange={(val) => dispatch({ type: 'SET_FIXED_COST', payload: val})} />
+              <SliderControl label="Variable Cost (per unit)" value={variableCost} min={10} max={50} step={2} onChange={(val) => dispatch({ type: 'SET_VARIABLE_COST', payload: val})} />
+              <SliderControl label="Max Price (Demand)" value={demandPrice} min={80} max={150} step={5} onChange={(val) => dispatch({ type: 'SET_DEMAND_PRICE', payload: val})} />
+              
               <div className="text-sm border-t border-neutral-dark/50 pt-4"><h4 className="font-semibold mb-2">Key Points</h4><p>Break-even at Q ≈ {breakEven.q}</p><p>Profit Maximized at Q = {profitMax.q}</p></div>
               
               <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
@@ -81,8 +103,7 @@ export default function CostRevenueGraph({ initialFixedCost = 1000, initialVaria
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -96,7 +117,6 @@ export default function CostRevenueGraph({ initialFixedCost = 1000, initialVaria
                     <Area yAxisId="right" type="monotone" dataKey="Profit" stroke="#34d399" fill="#34d399" fillOpacity={0.3} />
                 </AreaChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

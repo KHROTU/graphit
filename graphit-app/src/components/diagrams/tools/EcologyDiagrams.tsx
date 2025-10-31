@@ -2,12 +2,13 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Label } from '@/components/ui/Label';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import dynamic from 'next/dynamic';
+import { SliderControl } from '../controls/SliderControl';
+import { ResistorInput } from '../controls/ResistorInput'; // Re-using for its structure
+import { SegmentControl } from '../controls/SegmentControl';
 
 const FoodWeb = dynamic(() => import('./FoodWeb'), { ssr: false, loading: () => <p className="text-center animate-pulse">Loading Food Web...</p>, });
 
@@ -42,9 +43,7 @@ const PyramidEditor = ({ title }: { title: string }) => {
   
   const [tiers, setTiers] = useState<PyramidTier[]>(initialData);
   const [textSize, setTextSize] = useState(14);
-  const diagramContainerRef = useRef<HTMLDivElement>(null);
-  const { openExportModal } = useExportModal();
-
+  
   const updateTier = (id: number, field: 'label' | 'value', newValue: string | number) => { setTiers(tiers.map(tier => tier.id === id ? { ...tier, [field]: field === 'value' ? Math.max(0, Number(newValue)) : newValue } : tier )); };
   const addTier = () => { const newId = tiers.length > 0 ? Math.max(...tiers.map(t => t.id)) + 1 : 1; setTiers([...tiers, { id: newId, label: 'New Tier', value: 50 }]); };
   const removeTier = (id: number) => { setTiers(tiers.filter(tier => tier.id !== id)); };
@@ -55,27 +54,24 @@ const PyramidEditor = ({ title }: { title: string }) => {
         <Card>
           <CardHeader><CardTitle>Pyramid of {title}</CardTitle></CardHeader>
           <div className="p-4 space-y-4 border-b border-neutral-dark/50 max-h-[350px] overflow-y-auto">
-            {tiers.map((tier, index) => (
-              <div key={tier.id} className="p-3 border border-neutral-dark/50 rounded-apple space-y-2 relative">
-                <Label className="font-semibold text-xs">Tier {index + 1}</Label>
-                <div className="flex gap-2 items-center">
-                  <Input placeholder="Label" value={tier.label} onChange={(e) => updateTier(tier.id, 'label', e.target.value)} className="flex-grow" />
-                  <Input type="number" placeholder="Value" value={tier.value} onChange={(e) => updateTier(tier.id, 'value', e.target.value)} className="w-24 flex-shrink-0" />
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => removeTier(tier.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                </div>
-              </div>
+            {tiers.map((tier) => (
+              <ResistorInput 
+                key={tier.id} 
+                value={tier.value} 
+                onChange={(val) => updateTier(tier.id, 'value', val)} 
+                onRemove={() => removeTier(tier.id)} 
+              />
             ))}
             <Button variant="outline" onClick={addTier} className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Tier</Button>
           </div>
           <div className="p-4 space-y-4">
-             <div><Label>Text Size ({textSize}pt)</Label><input type="range" min="6" max="24" value={textSize} onChange={e => setTextSize(Number(e.target.value))} className="w-full" /></div>
-            <Button onClick={() => openExportModal(diagramContainerRef, `pyramid-of-${title.toLowerCase()}`)} className="w-full"><Save className="mr-2 h-4 w-4" /> Save & Export</Button>
+             <SliderControl label="Text Size" unit="pt" value={textSize} min={6} max={24} step={1} onChange={setTextSize} />
           </div>
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px] md:min-h-0">
           <Card className="h-full !p-2 flex items-center justify-center">
-            <div ref={diagramContainerRef} className="w-full h-full p-4">
+            <div className="w-full h-full p-4">
               <PyramidDiagram data={tiers} textSize={textSize} />
             </div>
           </Card>
@@ -86,24 +82,41 @@ const PyramidEditor = ({ title }: { title: string }) => {
 
 export default function EcologyDiagrams() {
   const [activeTab, setActiveTab] = useState('foodWeb');
-  const diagrams: { [key: string]: { component: React.ReactNode } } = {
-    foodWeb: { component: <FoodWeb /> },
-    pyramidNumbers: { component: <PyramidEditor title="Numbers" /> },
-    pyramidBiomass: { component: <PyramidEditor title="Biomass" /> },
+  const diagramContainerRef = useRef<HTMLDivElement>(null);
+  const { openExportModal } = useExportModal();
+
+  const diagrams: { [key: string]: { name: string, component: React.ReactNode } } = {
+    foodWeb: { name: 'Food Web', component: <FoodWeb showExport={false} /> },
+    pyramidNumbers: { name: 'Pyramid of Numbers', component: <PyramidEditor title="Numbers" /> },
+    pyramidBiomass: { name: 'Pyramid of Biomass', component: <PyramidEditor title="Biomass" /> },
   };
+
+  const activeDiagramName = diagrams[activeTab].name;
+
   return (
-    <div data-testid="diagram-container" className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
       <div className="md:col-span-1">
         <Card>
           <CardHeader><CardTitle>Diagram Type</CardTitle></CardHeader>
           <div className="p-4 space-y-2">
-            <Button variant={activeTab === 'foodWeb' ? 'default' : 'ghost'} onClick={() => setActiveTab('foodWeb')} className="w-full justify-start">Food Web</Button>
-            <Button variant={activeTab === 'pyramidNumbers' ? 'default' : 'ghost'} onClick={() => setActiveTab('pyramidNumbers')} className="w-full justify-start">Pyramid of Numbers</Button>
-            <Button variant={activeTab === 'pyramidBiomass' ? 'default' : 'ghost'} onClick={() => setActiveTab('pyramidBiomass')} className="w-full justify-start">Pyramid of Biomass</Button>
+            <SegmentControl 
+              value={activeTab}
+              onValueChange={(val) => setActiveTab(val)}
+              options={[
+                  {value: 'foodWeb', label: 'Food Web'},
+                  {value: 'pyramidNumbers', label: 'Pyramid of Numbers'},
+                  {value: 'pyramidBiomass', label: 'Pyramid of Biomass'}
+              ]}
+            />
+          </div>
+          <div className="p-4 border-t border-neutral-dark/30">
+            <Button onClick={() => openExportModal(diagramContainerRef, activeDiagramName)} className="w-full">
+              <Save className="mr-2 h-4 w-4" /> Save & Export
+            </Button>
           </div>
         </Card>
       </div>
-      <div className="md:col-span-3 min-h-[70vh]">
+      <div className="md:col-span-3 min-h-[70vh]" ref={diagramContainerRef} data-testid="diagram-container">
         {diagrams[activeTab].component}
       </div>
     </div>

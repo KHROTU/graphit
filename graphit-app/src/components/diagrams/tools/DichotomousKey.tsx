@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useReducer, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -18,20 +18,70 @@ interface KeyNode {
 
 type NodeMap = Record<string, KeyNode>;
 
-const NodeComponent = ({ nodeId, nodeMap, updateNode, addNode, removeNode, setNodeType }: {
+type State = {
+    nodes: NodeMap;
+    nextId: number;
+}
+
+type Action = 
+    | { type: 'ADD_NODE', payload: { parentId: string, branch: 'yes' | 'no' } }
+    | { type: 'UPDATE_NODE', payload: { id: string, content: string } }
+    | { type: 'SET_NODE_TYPE', payload: { id: string, type: 'question' | 'species' } }
+    | { type: 'REMOVE_NODE', payload: { nodeId: string } };
+
+function keyReducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'ADD_NODE': {
+            const { parentId, branch } = action.payload;
+            const newId = `node-${state.nextId}`;
+            const newNode: KeyNode = { id: newId, type: 'species', content: 'New Item' };
+            
+            const newNodes = { ...state.nodes };
+            newNodes[newId] = newNode;
+            newNodes[parentId] = { ...newNodes[parentId], [branch === 'yes' ? 'yesId' : 'noId']: newId };
+            
+            return { ...state, nodes: newNodes, nextId: state.nextId + 1 };
+        }
+        case 'UPDATE_NODE': {
+            const { id, content } = action.payload;
+            return { ...state, nodes: { ...state.nodes, [id]: { ...state.nodes[id], content } }};
+        }
+        case 'SET_NODE_TYPE': {
+            const { id, type } = action.payload;
+            return { ...state, nodes: { ...state.nodes, [id]: { ...state.nodes[id], type } }};
+        }
+        case 'REMOVE_NODE': {
+            const { nodeId } = action.payload;
+            const newNodes = { ...state.nodes };
+            Object.values(newNodes).forEach(parent => {
+                if(parent.yesId === nodeId) delete parent.yesId;
+                if(parent.noId === nodeId) delete parent.noId;
+            });
+
+            const deleteBranch = (id: string) => {
+                const node = newNodes[id];
+                if(!node) return;
+                if(node.yesId) deleteBranch(node.yesId);
+                if(node.noId) deleteBranch(node.noId);
+                delete newNodes[id];
+            }
+            deleteBranch(nodeId);
+            return { ...state, nodes: newNodes };
+        }
+        default: return state;
+    }
+}
+
+const NodeComponent = ({ nodeId, nodeMap, dispatch }: {
   nodeId: string;
   nodeMap: NodeMap;
-  updateNode: (id: string, content: string) => void;
-  addNode: (parentId: string, branch: 'yes' | 'no') => void;
-  removeNode: (nodeId: string) => void;
-  setNodeType: (nodeId: string, type: 'question' | 'species') => void;
+  dispatch: React.Dispatch<Action>;
 }) => {
   const node = nodeMap[nodeId];
   if (!node) return null;
 
   const yesChild = node.yesId ? nodeMap[node.yesId] : null;
   const noChild = node.noId ? nodeMap[node.noId] : null;
-
   const isQuestion = node.type === 'question';
 
   return (
@@ -40,21 +90,21 @@ const NodeComponent = ({ nodeId, nodeMap, updateNode, addNode, removeNode, setNo
         <div className={`p-2 border-2 rounded-apple w-48 text-center transition-colors ${ isQuestion ? 'bg-neutral border-accent' : 'bg-accent/20 border-secondary'}`}>
           <Input 
             value={node.content} 
-            onChange={(e) => updateNode(node.id, e.target.value)}
+            onChange={(e) => dispatch({type: 'UPDATE_NODE', payload: {id: node.id, content: e.target.value}})}
             className="text-center text-xs h-auto p-1 bg-transparent border-none focus:ring-0"
             placeholder={isQuestion ? 'Enter Question...' : 'Enter Species...'}
           />
         </div>
 
         <div className="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setNodeType(node.id, 'question')} title="Convert to Question">
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => dispatch({type: 'SET_NODE_TYPE', payload: {id: node.id, type: 'question'}})} title="Convert to Question">
                 <GitBranch className={`w-4 h-4 ${isQuestion ? 'text-accent' : ''}`}/>
             </Button>
-            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setNodeType(node.id, 'species')} title="Convert to Species">
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => dispatch({type: 'SET_NODE_TYPE', payload: {id: node.id, type: 'species'}})} title="Convert to Species">
                 <Leaf className={`w-4 h-4 ${!isQuestion ? 'text-secondary' : ''}`} />
             </Button>
             {node.id !== 'root' && (
-                <Button size="icon" variant="ghost" className="h-6 w-6 text-red-500" onClick={() => removeNode(node.id)} title="Delete Branch">
+                <Button size="icon" variant="ghost" className="h-6 w-6 text-red-500" onClick={() => dispatch({type: 'REMOVE_NODE', payload: {nodeId: node.id}})} title="Delete Branch">
                     <Trash2 className="w-4 h-4"/>
                 </Button>
             )}
@@ -62,8 +112,8 @@ const NodeComponent = ({ nodeId, nodeMap, updateNode, addNode, removeNode, setNo
         
         {isQuestion && (
           <div className="text-xs mt-1 flex gap-2">
-            {!yesChild && <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => addNode(node.id, 'yes')}><Plus className="w-3 h-3 mr-1"/> Yes</Button>}
-            {!noChild && <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => addNode(node.id, 'no')}><Plus className="w-3 h-3 mr-1"/> No</Button>}
+            {!yesChild && <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => dispatch({type: 'ADD_NODE', payload: {parentId: node.id, branch: 'yes'}})}><Plus className="w-3 h-3 mr-1"/> Yes</Button>}
+            {!noChild && <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => dispatch({type: 'ADD_NODE', payload: {parentId: node.id, branch: 'no'}})}><Plus className="w-3 h-3 mr-1"/> No</Button>}
           </div>
         )}
       </div>
@@ -77,8 +127,8 @@ const NodeComponent = ({ nodeId, nodeMap, updateNode, addNode, removeNode, setNo
           </svg>
 
           <div className="flex flex-col gap-12">
-            {yesChild && <div className="flex items-center"><span className="text-xs mr-2 font-bold text-green-600">Yes:</span><NodeComponent {...{nodeId: node.yesId!, nodeMap, updateNode, addNode, removeNode, setNodeType}} /></div>}
-            {noChild && <div className="flex items-center"><span className="text-xs mr-2 font-bold text-red-600">No:</span><NodeComponent {...{nodeId: node.noId!, nodeMap, updateNode, addNode, removeNode, setNodeType}} /></div>}
+            {yesChild && <div className="flex items-center"><span className="text-xs mr-2 font-bold text-green-600">Yes:</span><NodeComponent nodeId={node.yesId!} nodeMap={nodeMap} dispatch={dispatch} /></div>}
+            {noChild && <div className="flex items-center"><span className="text-xs mr-2 font-bold text-red-600">No:</span><NodeComponent nodeId={node.noId!} nodeMap={nodeMap} dispatch={dispatch} /></div>}
           </div>
         </div>
       )}
@@ -86,58 +136,19 @@ const NodeComponent = ({ nodeId, nodeMap, updateNode, addNode, removeNode, setNo
   );
 };
 
-
 export default function DichotomousKey() {
-  const [nodes, setNodes] = useState<NodeMap>({
-    'root': { id: 'root', type: 'question', content: 'Does it have feathers?', yesId: 'node-1', noId: 'node-2' },
-    'node-1': { id: 'node-1', type: 'species', content: 'Bird' },
-    'node-2': { id: 'node-2', type: 'species', content: 'Fish' },
-  });
+  const initialState: State = {
+      nodes: {
+        'root': { id: 'root', type: 'question', content: 'Does it have feathers?', yesId: 'node-1', noId: 'node-2' },
+        'node-1': { id: 'node-1', type: 'species', content: 'Bird' },
+        'node-2': { id: 'node-2', type: 'species', content: 'Fish' },
+      },
+      nextId: 3,
+  };
+  const [state, dispatch] = useReducer(keyReducer, initialState);
+  
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
-  const nextId = useRef(3);
-
-  const addNode = useCallback((parentId: string, branch: 'yes' | 'no') => {
-    const newId = `node-${nextId.current++}`;
-    const newNode: KeyNode = { id: newId, type: 'species', content: 'New Item' };
-    
-    setNodes(prev => {
-      const newNodes = { ...prev };
-      newNodes[newId] = newNode;
-      newNodes[parentId] = { ...newNodes[parentId], [branch === 'yes' ? 'yesId' : 'noId']: newId };
-      return newNodes;
-    });
-  }, []);
-
-  const updateNode = useCallback((id: string, content: string) => {
-    setNodes(prev => ({ ...prev, [id]: { ...prev[id], content } }));
-  }, []);
-  
-  const setNodeType = useCallback((id: string, type: 'question' | 'species') => {
-    setNodes(prev => ({ ...prev, [id]: { ...prev[id], type } }));
-  }, []);
-
-  const removeNode = useCallback((nodeId: string) => {
-    setNodes(prev => {
-        const newNodes = { ...prev };
-        
-        Object.values(newNodes).forEach(parent => {
-            if(parent.yesId === nodeId) delete parent.yesId;
-            if(parent.noId === nodeId) delete parent.noId;
-        });
-
-        const deleteBranch = (id: string) => {
-            const node = newNodes[id];
-            if(!node) return;
-            if(node.yesId) deleteBranch(node.yesId);
-            if(node.noId) deleteBranch(node.noId);
-            delete newNodes[id];
-        }
-        deleteBranch(nodeId);
-        
-        return newNodes;
-    });
-  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -146,8 +157,8 @@ export default function DichotomousKey() {
           <CardHeader><CardTitle>Instructions</CardTitle></CardHeader>
            <div className="p-6 space-y-3 text-sm text-text/80">
               <p>• Build your key visually! Click into any box to edit the text.</p>
-              <p>• Hover over a node to see options to change its type (Question or Species) or delete it.</p>
-              <p>• Click the <span className="text-accent font-semibold">[+ Yes]</span> or <span className="text-accent font-semibold">[+ No]</span> buttons on a question node to add a new branch.</p>
+              <p>• Hover over a node to see options to change its type or delete it.</p>
+              <p>• Click the <span className="text-accent font-semibold">[+ Yes]</span> or <span className="text-accent font-semibold">[+ No]</span> buttons on a question to add a branch.</p>
            </div>
            <div className="p-4 border-t border-neutral-dark/30">
                <Button onClick={() => openExportModal(diagramContainerRef, 'dichotomous-key')} className="w-full">
@@ -161,7 +172,7 @@ export default function DichotomousKey() {
           <div ref={diagramContainerRef} data-testid="diagram-container">
             <AnimatePresence>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {nodes['root'] && <NodeComponent nodeId="root" nodeMap={nodes} updateNode={updateNode} addNode={addNode} removeNode={removeNode} setNodeType={setNodeType} />}
+                {state.nodes['root'] && <NodeComponent nodeId="root" nodeMap={state.nodes} dispatch={dispatch} />}
               </motion.div>
             </AnimatePresence>
           </div>

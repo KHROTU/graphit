@@ -1,20 +1,26 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Label } from '@/components/ui/Label';
-import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+import { SelectControl } from '../controls/SelectControl';
 
 type ClimatePreset = 'rainforest' | 'desert' | 'tundra';
+interface ClimateGraphProps { initialPreset?: ClimatePreset; }
 
-interface ClimateGraphProps {
-  initialPreset?: ClimatePreset;
+type State = { preset: ClimatePreset; };
+type Action = { type: 'SET_PRESET', payload: ClimatePreset };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_PRESET': return { preset: action.payload };
+        default: return state;
+    }
 }
 
 const climatePresets: { [key in ClimatePreset]: { temp: number[], precip: number[] } } = {
@@ -23,9 +29,17 @@ const climatePresets: { [key in ClimatePreset]: { temp: number[], precip: number
   tundra:     { temp: [-25,-26,-22,-15,-5,2,5,4,-1,-10,-18,-22], precip: [10,8,10,10,10,15,25,30,20,15,12,10] },
 };
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const climateOptions: { value: ClimatePreset, label: string }[] = [
+    { value: 'rainforest', label: 'Tropical Rainforest' },
+    { value: 'desert', label: 'Hot Desert' },
+    { value: 'tundra', label: 'Arctic Tundra' },
+];
 
-export default function ClimateGraph({ initialPreset = 'rainforest' }: ClimateGraphProps) {
-  const [preset, setPreset] = useState<ClimatePreset>(initialPreset);
+export default function ClimateGraph(props: ClimateGraphProps) {
+  const initialState: State = { preset: props.initialPreset || 'rainforest' };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { preset } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -42,9 +56,7 @@ export default function ClimateGraph({ initialPreset = 'rainforest' }: ClimateGr
     return formattedValue;
   };
 
-  const getDiagramState = () => ({
-    initialPreset: preset,
-  });
+  const getDiagramState = () => ({ initialPreset: preset });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -52,14 +64,12 @@ export default function ClimateGraph({ initialPreset = 'rainforest' }: ClimateGr
         <Card>
           <CardHeader><CardTitle>Configuration</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div>
-                <Label>Climate Type</Label>
-                <Select value={preset} onChange={e => setPreset(e.target.value as ClimatePreset)} className="mt-2">
-                  <option value="rainforest">Tropical Rainforest</option>
-                  <option value="desert">Hot Desert</option>
-                  <option value="tundra">Arctic Tundra</option>
-                </Select>
-              </div>
+              <SelectControl
+                label="Climate Type"
+                value={preset}
+                onValueChange={(val) => dispatch({type: 'SET_PRESET', payload: val})}
+                options={climateOptions}
+              />
               <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
                 <Button onClick={() => openExportModal(diagramContainerRef, 'climate-graph')}>
                     <Save className="mr-2 h-4 w-4" /> Save & Export Image
@@ -72,8 +82,7 @@ export default function ClimateGraph({ initialPreset = 'rainforest' }: ClimateGr
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px] md:min-h-0">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -86,7 +95,6 @@ export default function ClimateGraph({ initialPreset = 'rainforest' }: ClimateGr
                     <Line yAxisId="right" type="monotone" dataKey="Temperature" stroke="var(--color-secondary)" strokeWidth={2} />
                 </ComposedChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

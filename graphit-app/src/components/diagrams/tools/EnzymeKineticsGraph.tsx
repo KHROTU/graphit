@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -16,15 +16,35 @@ interface EnzymeKineticsProps {
   initialInhibitor?: number;
 }
 
+type State = { vmax: number; km: number; inhibitor: number; };
+type Action = 
+    | { type: 'SET_VMAX', payload: number }
+    | { type: 'SET_KM', payload: number }
+    | { type: 'SET_INHIBITOR', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_VMAX': return { ...state, vmax: action.payload };
+        case 'SET_KM': return { ...state, km: action.payload };
+        case 'SET_INHIBITOR': return { ...state, inhibitor: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (val: unknown): React.ReactNode => {
     if (typeof val === 'number') return val.toFixed(2);
     return String(val);
 };
 
-export default function EnzymeKineticsGraph({ initialVmax = 100, initialKm = 20, initialInhibitor = 0 }: EnzymeKineticsProps) {
-  const [vmax, setVmax] = useState(initialVmax);
-  const [km, setKm] = useState(initialKm);
-  const [inhibitor, setInhibitor] = useState(initialInhibitor); // 0 = no inhibitor, >0 = competitive inhibitor
+export default function EnzymeKineticsGraph(props: EnzymeKineticsProps) {
+  const initialState: State = {
+      vmax: props.initialVmax || 100,
+      km: props.initialKm || 20,
+      inhibitor: props.initialInhibitor || 0,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { vmax, km, inhibitor } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -57,9 +77,9 @@ export default function EnzymeKineticsGraph({ initialVmax = 100, initialKm = 20,
         <Card>
           <CardHeader><CardTitle>Enzyme Kinetics (Michaelis-Menten)</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-            <div><Label>Max Rate (Vmax): {vmax}</Label><input type="range" min="20" max="200" value={vmax} onChange={(e) => setVmax(Number(e.target.value))} className="w-full mt-2" /></div>
-            <div><Label>Michaelis Constant (Km): {km}</Label><input type="range" min="5" max="80" value={km} onChange={(e) => setKm(Number(e.target.value))} className="w-full mt-2" /></div>
-            <div><Label>Competitive Inhibitor [I]: {inhibitor}</Label><input type="range" min="0" max="100" value={inhibitor} onChange={(e) => setInhibitor(Number(e.target.value))} className="w-full mt-2" /></div>
+            <div><Label>Max Rate (Vmax): {vmax}</Label><input type="range" min="20" max="200" value={vmax} onChange={(e) => dispatch({ type: 'SET_VMAX', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
+            <div><Label>Michaelis Constant (Km): {km}</Label><input type="range" min="5" max="80" value={km} onChange={(e) => dispatch({ type: 'SET_KM', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
+            <div><Label>Competitive Inhibitor [I]: {inhibitor}</Label><input type="range" min="0" max="100" value={inhibitor} onChange={(e) => dispatch({ type: 'SET_INHIBITOR', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
 
             <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
               <Button onClick={() => openExportModal(diagramContainerRef, 'enzyme-kinetics-graph')}>
@@ -73,8 +93,7 @@ export default function EnzymeKineticsGraph({ initialVmax = 100, initialKm = 20,
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -86,7 +105,6 @@ export default function EnzymeKineticsGraph({ initialVmax = 100, initialKm = 20,
                 {inhibitor > 0 && <Line type="monotone" dataKey="Inhibited Rate" name="With Inhibitor" stroke="var(--color-secondary)" strokeWidth={2} dot={false} strokeDasharray="5 5" />}
               </LineChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

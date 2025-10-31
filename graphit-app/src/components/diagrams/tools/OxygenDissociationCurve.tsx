@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -14,32 +14,39 @@ interface OxygenCurveProps {
   initialPh?: number;
 }
 
+type State = { ph: number };
+type Action = { type: 'SET_PH', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_PH': return { ph: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (val: unknown): React.ReactNode => {
     if (typeof val === 'number') return val.toFixed(1);
     return String(val);
 };
 
-export default function OxygenDissociationCurve({ initialPh = 7.4 }: OxygenCurveProps) {
-  const [ph, setPh] = useState(initialPh);
+export default function OxygenDissociationCurve(props: OxygenCurveProps) {
+  const initialState: State = { ph: props.initialPh || 7.4 };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { ph } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
 
   const data = useMemo(() => {
     const chartData = [];
-    // Hill equation parameters for hemoglobin
-    const n = 2.8; // Hill coefficient
-    const P50_ref = 3.5; // pO2 at 50% saturation at pH 7.4 (in kPa)
-    
-    // Bohr effect: P50 increases as pH decreases
+    const n = 2.8;
+    const P50_ref = 3.5;
     const P50 = P50_ref * Math.pow(10, (7.4 - ph) * 0.5);
 
     for (let pO2 = 0; pO2 <= 14; pO2 += 0.2) {
       const saturation = 100 * (Math.pow(pO2, n) / (Math.pow(P50, n) + Math.pow(pO2, n)));
-      chartData.push({
-        'pO2': pO2,
-        'Saturation': saturation,
-      });
+      chartData.push({ 'pO2': pO2, 'Saturation': saturation });
     }
     return chartData;
   }, [ph]);
@@ -56,7 +63,7 @@ export default function OxygenDissociationCurve({ initialPh = 7.4 }: OxygenCurve
           <div className="p-6 space-y-6">
             <div>
               <Label>Blood pH (Bohr Shift): {ph.toFixed(2)}</Label>
-              <input type="range" min="7.0" max="7.6" step="0.05" value={ph} onChange={(e) => setPh(Number(e.target.value))} className="w-full mt-2" />
+              <input type="range" min="7.0" max="7.6" step="0.05" value={ph} onChange={(e) => dispatch({ type: 'SET_PH', payload: Number(e.target.value) })} className="w-full mt-2" />
               <p className="text-xs text-text/60 mt-2">
                 Lower pH (e.g., in respiring tissues) shifts the curve right, promoting oxygen release.
               </p>
@@ -74,8 +81,7 @@ export default function OxygenDissociationCurve({ initialPh = 7.4 }: OxygenCurve
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -86,7 +92,6 @@ export default function OxygenDissociationCurve({ initialPh = 7.4 }: OxygenCurve
                 <Line type="monotone" dataKey="Saturation" name={`Hb Saturation at pH ${ph.toFixed(2)}`} stroke="var(--color-accent)" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

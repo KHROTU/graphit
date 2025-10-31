@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -18,10 +18,13 @@ interface MotionSegment {
   duration: number;
   value: number;
 }
+interface MotionGraphProps { initialSegments?: MotionSegment[]; }
 
-interface MotionGraphProps {
-  initialSegments?: MotionSegment[];
-}
+type State = { segments: MotionSegment[]; };
+type Action = 
+    | { type: 'ADD_SEGMENT' }
+    | { type: 'UPDATE_SEGMENT', payload: { id: number; field: keyof MotionSegment; value: string | number } }
+    | { type: 'REMOVE_SEGMENT', payload: { id: number } };
 
 const defaultSegments: MotionSegment[] = [
   { id: 1, type: 'accelerate', duration: 5, value: 2 },
@@ -29,13 +32,30 @@ const defaultSegments: MotionSegment[] = [
   { id: 3, type: 'decelerate', duration: 10, value: -1 },
 ];
 
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'ADD_SEGMENT':
+            return { ...state, segments: [...state.segments, { id: Date.now(), type: 'constant', duration: 5, value: 0 }] };
+        case 'UPDATE_SEGMENT': {
+            const { id, field, value } = action.payload;
+            return { ...state, segments: state.segments.map(s => s.id === id ? { ...s, [field]: value } : s) };
+        }
+        case 'REMOVE_SEGMENT':
+            return { ...state, segments: state.segments.filter(s => s.id !== action.payload.id) };
+        default: return state;
+    }
+}
+
 const formatValue = (value: unknown): React.ReactNode => {
   if (typeof value === 'number') return Number(value.toFixed(2));
   return String(value);
 };
 
-export default function MotionGraph({ initialSegments = defaultSegments }: MotionGraphProps) {
-  const [segments, setSegments] = useState<MotionSegment[]>(initialSegments);
+export default function MotionGraph({ initialSegments }: MotionGraphProps) {
+  const initialState: State = { segments: initialSegments || defaultSegments };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { segments } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -55,7 +75,7 @@ export default function MotionGraph({ initialSegments = defaultSegments }: Motio
           const acceleration = seg.type === 'accelerate' ? seg.value : -Math.abs(seg.value);
           currentVelocity = startVelocity + acceleration * t;
           if (seg.type === 'decelerate' && currentVelocity < 0) currentVelocity = 0;
-          segmentDistance = startVelocity + 0.5 * acceleration; // distance in one time step
+          segmentDistance = startVelocity * 1 + 0.5 * acceleration * (2*t - 1);
         }
         currentDistance += segmentDistance;
         chartData.push({ time: currentTime, distance: currentDistance, velocity: currentVelocity });
@@ -64,12 +84,6 @@ export default function MotionGraph({ initialSegments = defaultSegments }: Motio
     return chartData;
   }, [segments]);
   
-  const addSegment = () => setSegments([...segments, { id: Date.now(), type: 'constant', duration: 5, value: 0 }]);
-  const updateSegment = (id: number, field: keyof MotionSegment, value: string | number) => {
-    setSegments(segments.map(s => s.id === id ? { ...s, [field]: typeof value === 'string' ? value : Number(value) } : s));
-  };
-  const removeSegment = (id: number) => setSegments(segments.filter(s => s.id !== id));
-
   const getDiagramState = () => ({ initialSegments: segments });
 
   return (
@@ -80,12 +94,12 @@ export default function MotionGraph({ initialSegments = defaultSegments }: Motio
           <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto">
             {segments.map((seg, index) => (
               <div key={seg.id} className="p-3 border border-neutral-dark/50 rounded-apple space-y-2">
-                <div className="flex justify-between items-center"><Label className="font-semibold">Segment {index + 1}</Label><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeSegment(seg.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button></div>
-                <Select value={seg.type} onChange={e => updateSegment(seg.id, 'type', e.target.value)}><option value="accelerate">Accelerate</option><option value="constant">Constant Velocity</option><option value="decelerate">Decelerate</option></Select>
-                <div className="flex gap-2"><Input type="number" value={seg.duration} onChange={e => updateSegment(seg.id, 'duration', e.target.value)} placeholder="Duration (s)" /><Input type="number" value={seg.value} onChange={e => updateSegment(seg.id, 'value', e.target.value)} placeholder={seg.type === 'constant' ? 'Velocity (m/s)' : 'Accel (m/s²)'} /></div>
+                <div className="flex justify-between items-center"><Label className="font-semibold">Segment {index + 1}</Label><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => dispatch({type: 'REMOVE_SEGMENT', payload: {id: seg.id}})}><Trash2 className="w-4 h-4 text-red-500" /></Button></div>
+                <Select value={seg.type} onChange={e => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'type', value: e.target.value}})}><option value="accelerate">Accelerate</option><option value="constant">Constant Velocity</option><option value="decelerate">Decelerate</option></Select>
+                <div className="flex gap-2"><Input type="number" value={seg.duration} onChange={e => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'duration', value: Number(e.target.value)}})} placeholder="Duration (s)" /><Input type="number" value={seg.value} onChange={e => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'value', value: Number(e.target.value)}})} placeholder={seg.type === 'constant' ? 'Velocity (m/s)' : 'Accel (m/s²)'} /></div>
               </div>
             ))}
-            <Button variant="outline" onClick={addSegment} className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Segment</Button>
+            <Button variant="outline" onClick={() => dispatch({type: 'ADD_SEGMENT'})} className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Segment</Button>
           </div>
            <div className="p-4 border-t border-neutral-dark/30 flex flex-col gap-2">
                <Button onClick={() => openExportModal(diagramContainerRef, 'motion-graphs')}><Save className="mr-2 h-4 w-4" /> Save & Export Image</Button>

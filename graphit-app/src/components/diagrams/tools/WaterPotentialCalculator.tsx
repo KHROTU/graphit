@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,21 @@ interface WaterPotentialProps {
   initialCellSolute?: number;
   initialCellPressure?: number;
   initialSolutionSolute?: number;
+}
+
+type State = { cellSolute: number; cellPressure: number; solutionSolute: number; };
+type Action = 
+    | { type: 'SET_CELL_SOLUTE', payload: number }
+    | { type: 'SET_CELL_PRESSURE', payload: number }
+    | { type: 'SET_SOLUTION_SOLUTE', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_CELL_SOLUTE': return { ...state, cellSolute: action.payload };
+        case 'SET_CELL_PRESSURE': return { ...state, cellPressure: action.payload };
+        case 'SET_SOLUTION_SOLUTE': return { ...state, solutionSolute: action.payload };
+        default: return state;
+    }
 }
 
 const PlantCell = ({ state }: { state: 'turgid' | 'flaccid' | 'plasmolyzed' }) => {
@@ -31,9 +46,14 @@ const PlantCell = ({ state }: { state: 'turgid' | 'flaccid' | 'plasmolyzed' }) =
 };
 
 export default function WaterPotentialCalculator(props: WaterPotentialProps) {
-  const [cellSolute, setCellSolute] = useState(props.initialCellSolute || -700);
-  const [cellPressure, setCellPressure] = useState(props.initialCellPressure || 400);
-  const [solutionSolute, setSolutionSolute] = useState(props.initialSolutionSolute || -900);
+  const initialState: State = {
+      cellSolute: props.initialCellSolute || -700,
+      cellPressure: props.initialCellPressure || 400,
+      solutionSolute: props.initialSolutionSolute || -900,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { cellSolute, cellPressure, solutionSolute } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -71,13 +91,13 @@ export default function WaterPotentialCalculator(props: WaterPotentialProps) {
           <div className="p-6 space-y-4">
             <div className="p-3 bg-neutral-dark/30 rounded-lg space-y-2">
               <h4 className="font-semibold">Plant Cell</h4>
-              <div><Label>Solute Potential (Ψs): {cellSolute} kPa</Label><input type="range" min={-1500} max={0} step={50} value={cellSolute} onChange={e => setCellSolute(Number(e.target.value))} className="w-full" /></div>
-              <div><Label>Pressure Potential (Ψp): {cellPressure} kPa</Label><input type="range" min={0} max={1500} step={50} value={cellPressure} onChange={e => setCellPressure(Number(e.target.value))} className="w-full" /></div>
+              <div><Label>Solute Potential (Ψs): {cellSolute} kPa</Label><input type="range" min={-1500} max={0} step={50} value={cellSolute} onChange={e => dispatch({type: 'SET_CELL_SOLUTE', payload: Number(e.target.value)})} className="w-full" /></div>
+              <div><Label>Pressure Potential (Ψp): {cellPressure} kPa</Label><input type="range" min={0} max={1500} step={50} value={cellPressure} onChange={e => dispatch({type: 'SET_CELL_PRESSURE', payload: Number(e.target.value)})} className="w-full" /></div>
               <p className="text-center font-bold !mt-4">Cell Ψ = {cellPotential} kPa</p>
             </div>
             <div className="p-3 bg-neutral-dark/30 rounded-lg space-y-2">
               <h4 className="font-semibold">External Solution</h4>
-              <div><Label>Solute Potential (Ψs): {solutionSolute} kPa</Label><input type="range" min={-1500} max={0} step={50} value={solutionSolute} onChange={e => setSolutionSolute(Number(e.target.value))} className="w-full" /></div>
+              <div><Label>Solute Potential (Ψs): {solutionSolute} kPa</Label><input type="range" min={-1500} max={0} step={50} value={solutionSolute} onChange={e => dispatch({type: 'SET_SOLUTION_SOLUTE', payload: Number(e.target.value)})} className="w-full" /></div>
               <p className="text-center font-bold !mt-4">Solution Ψ = {solutionPotential} kPa</p>
             </div>
             <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">

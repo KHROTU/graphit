@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
@@ -10,6 +10,26 @@ import { useExportModal } from '@/lib/context/ExportModalContext';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, LabelList } from 'recharts';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+
+type Tab = 'mass' | 'ir';
+type MassMolecule = 'ethanol' | 'propanone' | 'bromoethane';
+type IRMolecule = 'alcohol' | 'acid' | 'ketone';
+interface SpectroscopyProps { initialTab?: Tab; initialMassMolecule?: MassMolecule; initialIRMolecule?: IRMolecule; }
+
+type State = { activeTab: Tab; massMolecule: MassMolecule; irMolecule: IRMolecule; };
+type Action = 
+    | { type: 'SET_TAB', payload: Tab }
+    | { type: 'SET_MASS_MOLECULE', payload: MassMolecule }
+    | { type: 'SET_IR_MOLECULE', payload: IRMolecule };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_TAB': return { ...state, activeTab: action.payload };
+        case 'SET_MASS_MOLECULE': return { ...state, massMolecule: action.payload };
+        case 'SET_IR_MOLECULE': return { ...state, irMolecule: action.payload };
+        default: return state;
+    }
+}
 
 const massSpecData = {
   ethanol: { M: 46, fragments: [{mz: 45, ab: 60}, {mz: 31, ab: 100}, {mz: 29, ab: 55}] },
@@ -23,27 +43,13 @@ const irSpecData = {
   ketone: { 'C=O': [1680, 1750], 'C-H': [2850, 3000] },
 };
 
-type Tab = 'mass' | 'ir';
-type MassMolecule = keyof typeof massSpecData;
-type IRMolecule = keyof typeof irSpecData;
-interface SpectroscopyProps {
-  initialTab?: Tab;
-  initialMassMolecule?: MassMolecule;
-  initialIRMolecule?: IRMolecule;
-}
-
-interface CustomBarLabelProps {
-  x?: number; y?: number; width?: number; payload?: { mz: number }; molecule: MassMolecule;
-}
-
+interface CustomBarLabelProps { x?: number; y?: number; width?: number; payload?: { mz: number }; molecule: MassMolecule; }
 const CustomBarLabel: React.FC<CustomBarLabelProps> = (props) => {
   const { x = 0, y = 0, width = 0, payload } = props;
   const data = massSpecData[props.molecule];
-
   let labelText = '';
   if (payload && payload.mz === data.M) labelText = 'M+';
   if (payload && 'M2' in data && payload.mz === data.M2) labelText = 'M+2';
-
   if (!labelText) return null;
   return (<text x={x + width / 2} y={y} dy={-4} fill="var(--color-secondary)" fontSize={10} textAnchor="middle">{labelText}</text>);
 };
@@ -51,10 +57,7 @@ const CustomBarLabel: React.FC<CustomBarLabelProps> = (props) => {
 const MassSpec = ({ molecule }: { molecule: MassMolecule }) => {
   const chartData = useMemo(() => {
     const data = massSpecData[molecule];
-    const points = [...data.fragments];
-    if (!points.some(p => p.mz === data.M)) points.push({mz: data.M, ab: 50});
-    if ('M2' in data && !points.some(p => p.mz === data.M2)) points.push({mz: data.M2, ab: 50});
-    return points.sort((a,b) => a.mz - b.mz);
+    return [...data.fragments].sort((a,b) => a.mz - b.mz);
   }, [molecule]);
   
   return (
@@ -75,20 +78,19 @@ const MassSpec = ({ molecule }: { molecule: MassMolecule }) => {
 const IRSpec = ({ molecule }: { molecule: IRMolecule }) => {
     const data = irSpecData[molecule];
     const chartData = useMemo(() => {
-        const points = [];
-        for (let i = 4000; i >= 500; i-=10) {
+        return Array.from({ length: 351 }, (_, i) => {
+            const wavenumber = 4000 - i * 10;
             let transmittance = 95 - Math.random() * 5;
             for (const range of Object.values(data)) {
-                if (i >= range[0] && i <= range[1]) {
+                if (wavenumber >= range[0] && wavenumber <= range[1]) {
                     const mid = (range[0] + range[1]) / 2;
                     const width = (range[1] - range[0]) / 2;
-                    const dip = 1 - Math.pow((i - mid) / width, 2);
+                    const dip = 1 - Math.pow((wavenumber - mid) / width, 2);
                     transmittance -= (50 + Math.random() * 20) * dip;
                 }
             }
-            points.push({ wavenumber: i, transmittance: Math.max(10, transmittance) });
-        }
-        return points;
+            return { wavenumber, transmittance: Math.max(10, transmittance) };
+        });
     }, [data]);
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -107,17 +109,20 @@ const IRSpec = ({ molecule }: { molecule: IRMolecule }) => {
 };
 
 export default function SpectroscopyTool(props: SpectroscopyProps) {
-  const [activeTab, setActiveTab] = useState<Tab>(props.initialTab || 'mass');
-  const [massMolecule, setMassMolecule] = useState<MassMolecule>(props.initialMassMolecule || 'ethanol');
-  const [irMolecule, setIrMolecule] = useState<IRMolecule>(props.initialIRMolecule || 'alcohol');
+  const initialState: State = {
+      activeTab: props.initialTab || 'mass',
+      massMolecule: props.initialMassMolecule || 'ethanol',
+      irMolecule: props.initialIRMolecule || 'alcohol',
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { activeTab, massMolecule, irMolecule } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
 
   const getDiagramState = () => ({
-    initialTab: activeTab,
-    initialMassMolecule: massMolecule,
-    initialIRMolecule: irMolecule,
+    initialTab: activeTab, initialMassMolecule: massMolecule, initialIRMolecule: irMolecule,
   });
 
   return (
@@ -126,14 +131,14 @@ export default function SpectroscopyTool(props: SpectroscopyProps) {
         <Card>
           <CardHeader><CardTitle>Analytical Spectroscopy</CardTitle></CardHeader>
           <div className="p-4 flex gap-2 border-b border-neutral-dark/30">
-            <Button className="flex-1" variant={activeTab === 'mass' ? 'default' : 'outline'} onClick={() => setActiveTab('mass')}>Mass Spec</Button>
-            <Button className="flex-1" variant={activeTab === 'ir' ? 'default' : 'outline'} onClick={() => setActiveTab('ir')}>IR Spec</Button>
+            <Button className="flex-1" variant={activeTab === 'mass' ? 'default' : 'outline'} onClick={() => dispatch({type: 'SET_TAB', payload: 'mass'})}>Mass Spec</Button>
+            <Button className="flex-1" variant={activeTab === 'ir' ? 'default' : 'outline'} onClick={() => dispatch({type: 'SET_TAB', payload: 'ir'})}>IR Spec</Button>
           </div>
           <div className="p-6 space-y-4">
             {activeTab === 'mass' ? (
-              <div><Label>Molecule</Label><Select value={massMolecule} onChange={e => setMassMolecule(e.target.value as MassMolecule)}><option value="ethanol">Ethanol</option><option value="propanone">Propanone</option><option value="bromoethane">Bromoethane</option></Select></div>
+              <div><Label>Molecule</Label><Select value={massMolecule} onChange={e => dispatch({type: 'SET_MASS_MOLECULE', payload: e.target.value as MassMolecule})}><option value="ethanol">Ethanol</option><option value="propanone">Propanone</option><option value="bromoethane">Bromoethane</option></Select></div>
             ) : (
-              <div><Label>Functional Group</Label><Select value={irMolecule} onChange={e => setIrMolecule(e.target.value as IRMolecule)}><option value="alcohol">Alcohol (O-H)</option><option value="acid">Carboxylic Acid (C=O, O-H)</option><option value="ketone">Ketone (C=O)</option></Select></div>
+              <div><Label>Functional Group</Label><Select value={irMolecule} onChange={e => dispatch({type: 'SET_IR_MOLECULE', payload: e.target.value as IRMolecule})}><option value="alcohol">Alcohol (O-H)</option><option value="acid">Carboxylic Acid (C=O, O-H)</option><option value="ketone">Ketone (C=O)</option></Select></div>
             )}
           </div>
           <div className="p-4 border-t border-neutral-dark/30 flex flex-col gap-2">

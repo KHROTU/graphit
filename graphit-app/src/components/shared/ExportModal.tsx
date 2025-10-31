@@ -4,56 +4,50 @@ import React, { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { Button } from '@/components/ui/Button';
-import { Label } from '@/components/ui/Label';
-import { Download, X as CloseIcon } from 'lucide-react';
+import { Download, X as CloseIcon, Loader2 } from 'lucide-react';
 import SteamSupportUnit from './SteamSupportUnit';
+import { toPng } from 'html-to-image';
 
 export default function ExportModal() {
-  const { isOpen, closeExportModal, diagramName } = useExportModal();
-  const [padding, setPadding] = useState(32);
+  const { isOpen, closeExportModal, diagramName, sourceRef } = useExportModal();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleDownload = useCallback(async () => {
+    if (!sourceRef?.current) {
+        alert('Error: Diagram element not found for export.');
+        return;
+    }
     setIsExporting(true);
+    
+    const element = sourceRef.current;
+    const { width, height } = element.getBoundingClientRect();
     
     const safeDiagramName = diagramName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const fileName = `${safeDiagramName || 'diagram'}.png`;
 
     try {
-      const response = await fetch('/api/screenshot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          urlPath: window.location.pathname + window.location.search,
-          padding: padding,
-        }),
-      });
+        const dataUrl = await toPng(element, {
+            width: Math.round(width),
+            height: Math.round(height),
+            cacheBust: true,
+            pixelRatio: 2,
+            skipFonts: true,
+        });
 
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+        link.remove();
 
     } catch (error) {
-      console.error('Export failed:', error);
-      alert('Sorry, there was an error exporting your diagram. Please check the console for details.');
+      console.error('Client-side export failed:', error);
+      alert('Sorry, there was an error exporting your diagram. Please check the console for details and try again.');
     } finally {
       setIsExporting(false);
       closeExportModal();
     }
-  }, [padding, diagramName, closeExportModal]);
+  }, [diagramName, sourceRef, closeExportModal]);
 
   return (
     <AnimatePresence>
@@ -62,12 +56,10 @@ export default function ExportModal() {
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} className="bg-neutral/95 backdrop-blur-sm rounded-[var(--border-radius-apple)] w-full max-w-sm flex flex-col gap-4 p-6 shadow-xl" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <div className="flex justify-between items-center"><h3 className="text-lg font-semibold">Export Diagram</h3><Button variant="ghost" size="icon" className="h-8 w-8" onClick={closeExportModal}><CloseIcon className="h-4 w-4"/></Button></div>
             
-            <div className="space-y-4">
-              <div><Label>Padding ({padding}px)</Label><input type="range" min="0" max="100" value={padding} onChange={e => setPadding(Number(e.target.value))} className="w-full mt-2" /></div>
-            </div>
             <SteamSupportUnit />
+            
             <Button onClick={handleDownload} className="w-full" disabled={isExporting}>
-              {isExporting ? 'Generating your image...' : <><Download className="mr-2 h-4 w-4" /> Download as PNG</>}
+              {isExporting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Download className="mr-2 h-4 w-4" /> Download as PNG</>}
             </Button>
           </motion.div>
         </motion.div>

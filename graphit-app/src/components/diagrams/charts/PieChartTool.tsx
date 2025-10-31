@@ -21,9 +21,10 @@ export default function PieChartTool() {
     if (lines.length < 2) return [];
     return lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.trim());
+      const value = parseFloat(values[1]);
       return {
         name: values[0],
-        value: parseFloat(values[1]),
+        value: isNaN(value) ? 0 : value,
       };
     });
   }, [csvData]);
@@ -41,8 +42,7 @@ export default function PieChartTool() {
         </Card>
       </div>
       <div className="md:col-span-2">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%" label>
@@ -52,7 +52,6 @@ export default function PieChartTool() {
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

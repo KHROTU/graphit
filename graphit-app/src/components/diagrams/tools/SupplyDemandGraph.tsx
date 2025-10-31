@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -15,14 +15,31 @@ interface SupplyDemandProps {
   initialSupplyShift?: number;
 }
 
+type State = { demandShift: number; supplyShift: number; };
+type Action = 
+    | { type: 'SET_DEMAND_SHIFT', payload: number }
+    | { type: 'SET_SUPPLY_SHIFT', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_DEMAND_SHIFT': return { ...state, demandShift: action.payload };
+        case 'SET_SUPPLY_SHIFT': return { ...state, supplyShift: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (value: number | string) => {
   if (typeof value === 'number') return Number(value.toFixed(2));
   return value;
 };
 
-export default function SupplyDemandGraph({ initialDemandShift = 0, initialSupplyShift = 0 }: SupplyDemandProps) {
-  const [demandShift, setDemandShift] = useState(initialDemandShift);
-  const [supplyShift, setSupplyShift] = useState(initialSupplyShift);
+export default function SupplyDemandGraph(props: SupplyDemandProps) {
+  const initialState: State = {
+      demandShift: props.initialDemandShift || 0,
+      supplyShift: props.initialSupplyShift || 0,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { demandShift, supplyShift } = state;
   
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
@@ -53,8 +70,8 @@ export default function SupplyDemandGraph({ initialDemandShift = 0, initialSuppl
         <Card>
           <CardHeader><CardTitle>Configuration</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div><Label>Demand Shift ({demandShift})</Label><input type="range" min="-60" max="30" value={demandShift} onChange={(e) => setDemandShift(parseInt(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Supply Shift ({supplyShift})</Label><input type="range" min="-30" max="60" value={supplyShift} onChange={(e) => setSupplyShift(parseInt(e.target.value))} className="w-full mt-2" /></div>
+              <div><Label>Demand Shift ({demandShift})</Label><input type="range" min="-60" max="30" value={demandShift} onChange={(e) => dispatch({type: 'SET_DEMAND_SHIFT', payload: parseInt(e.target.value)})} className="w-full mt-2" /></div>
+              <div><Label>Supply Shift ({supplyShift})</Label><input type="range" min="-30" max="60" value={supplyShift} onChange={(e) => dispatch({type: 'SET_SUPPLY_SHIFT', payload: parseInt(e.target.value)})} className="w-full mt-2" /></div>
               <div className="text-sm border-t border-neutral-dark/50 pt-4">
                   <h4 className="font-semibold mb-2">Equilibrium</h4>
                   <p>Price (P*): <span className="font-mono text-accent">{formatValue(equilibrium.P)}</span></p>
@@ -72,8 +89,7 @@ export default function SupplyDemandGraph({ initialDemandShift = 0, initialSuppl
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px] md:min-h-0">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -84,11 +100,10 @@ export default function SupplyDemandGraph({ initialDemandShift = 0, initialSuppl
                       contentStyle={{ backgroundColor: 'var(--color-neutral)', border: '1px solid var(--color-neutral-dark)', borderRadius: 'var(--border-radius-apple)' }} 
                     />
                     <Legend verticalAlign="top" height={36} wrapperStyle={{ color: 'var(--color-text)' }} />
-                    <Line type="monotone" dataKey="demand" stroke="var(--color-accent)" strokeWidth={2} dot={false} name="Demand" />
-                    <Line type="monotone" dataKey="supply" stroke="var(--color-secondary)" strokeWidth={2} dot={false} name="Supply" />
+                    <Line type="monotone" dataKey="demand" stroke="var(--color-accent)" strokeWidth={2} dot={false} name="Demand" connectNulls/>
+                    <Line type="monotone" dataKey="supply" stroke="var(--color-secondary)" strokeWidth={2} dot={false} name="Supply" connectNulls/>
                 </LineChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

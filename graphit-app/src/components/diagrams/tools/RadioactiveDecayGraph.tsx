@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -15,14 +15,32 @@ interface DecayProps {
   initialHalfLife?: number;
 }
 
+type State = { initialNuclei: number; halfLife: number; };
+type Action = 
+    | { type: 'SET_NUCLEI', payload: number }
+    | { type: 'SET_HALF_LIFE', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_NUCLEI': return { ...state, initialNuclei: action.payload };
+        case 'SET_HALF_LIFE': return { ...state, halfLife: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (value: unknown): React.ReactNode => {
   if (typeof value === 'number') return Number(value.toFixed(2));
   return String(value);
 };
 
-export default function RadioactiveDecayGraph({ initialInitialNuclei = 1000, initialHalfLife = 10 }: DecayProps) {
-  const [initialNuclei, setInitialNuclei] = useState(initialInitialNuclei);
-  const [halfLife, setHalfLife] = useState(initialHalfLife);
+export default function RadioactiveDecayGraph(props: DecayProps) {
+  const initialState: State = {
+      initialNuclei: props.initialInitialNuclei || 1000,
+      halfLife: props.initialHalfLife || 10,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { initialNuclei, halfLife } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -50,8 +68,8 @@ export default function RadioactiveDecayGraph({ initialInitialNuclei = 1000, ini
         <Card>
           <CardHeader><CardTitle>Decay Parameters</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div><Label>Initial Nuclei (N₀): {initialNuclei}</Label><input type="range" min="100" max="10000" step="100" value={initialNuclei} onChange={(e) => setInitialNuclei(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Half-Life (s): {halfLife}</Label><input type="range" min="1" max="50" step="1" value={halfLife} onChange={(e) => setHalfLife(Number(e.target.value))} className="w-full mt-2" /></div>
+              <div><Label>Initial Nuclei (N₀): {initialNuclei}</Label><input type="range" min="100" max="10000" step="100" value={initialNuclei} onChange={(e) => dispatch({ type: 'SET_NUCLEI', payload: Number(e.target.value)})} className="w-full mt-2" /></div>
+              <div><Label>Half-Life (s): {halfLife}</Label><input type="range" min="1" max="50" step="1" value={halfLife} onChange={(e) => dispatch({ type: 'SET_HALF_LIFE', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
               <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
                 <Button onClick={() => openExportModal(diagramContainerRef, 'radioactive-decay')}>
                     <Save className="mr-2 h-4 w-4" /> Save & Export Image
@@ -64,8 +82,7 @@ export default function RadioactiveDecayGraph({ initialInitialNuclei = 1000, ini
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -77,7 +94,6 @@ export default function RadioactiveDecayGraph({ initialInitialNuclei = 1000, ini
                     {halfLifePoints.map(p => <ReferenceDot key={p.time} x={p.time} y={p.nuclei} r={5} fill="var(--color-secondary)" stroke="white" ifOverflow="extendDomain" />)}
                 </AreaChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

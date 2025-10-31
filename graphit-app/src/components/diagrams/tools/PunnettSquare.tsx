@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, forwardRef } from 'react';
+import React, { useReducer, useRef, forwardRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
@@ -12,6 +12,20 @@ import SaveGraphButton from '@/components/shared/SaveGraphButton';
 interface PunnettSquareProps {
   initialParent1?: string;
   initialParent2?: string;
+}
+
+type State = { parent1: string; parent2: string; };
+type Action = 
+    | { type: 'SET_PARENT1', payload: string }
+    | { type: 'SET_PARENT2', payload: string };
+
+function reducer(state: State, action: Action): State {
+    const sanitize = (val: string) => val.replace(/[^A-Za-z]/g, '').slice(0, 2);
+    switch(action.type) {
+        case 'SET_PARENT1': return { ...state, parent1: sanitize(action.payload) };
+        case 'SET_PARENT2': return { ...state, parent2: sanitize(action.payload) };
+        default: return state;
+    }
 }
 
 const PunnettSquareDiagram = forwardRef<HTMLDivElement, { parent1: string, parent2: string }>(
@@ -39,17 +53,17 @@ const PunnettSquareDiagram = forwardRef<HTMLDivElement, { parent1: string, paren
 });
 PunnettSquareDiagram.displayName = 'PunnettSquareDiagram';
 
+export default function PunnettSquare(props: PunnettSquareProps) {
+  const initialState: State = {
+      parent1: props.initialParent1 || 'Aa',
+      parent2: props.initialParent2 || 'Aa',
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { parent1, parent2 } = state;
 
-export default function PunnettSquare({ initialParent1 = 'Aa', initialParent2 = 'Aa' }: PunnettSquareProps) {
-  const [parent1, setParent1] = useState(initialParent1);
-  const [parent2, setParent2] = useState(initialParent2);
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
-
-  const handleChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
-    setter(value.replace(/[^A-Za-z]/g, '').slice(0, 2));
-  };
 
   const getDiagramState = () => ({
     initialParent1: parent1,
@@ -62,8 +76,8 @@ export default function PunnettSquare({ initialParent1 = 'Aa', initialParent2 = 
         <Card>
           <CardHeader><CardTitle>Configuration</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-            <div><Label htmlFor="p1">Parent 1 Genotype</Label><Input id="p1" value={parent1} onChange={e => handleChange(setParent1, e.target.value)} className="mt-2" /></div>
-            <div><Label htmlFor="p2">Parent 2 Genotype</Label><Input id="p2" value={parent2} onChange={e => handleChange(setParent2, e.target.value)} className="mt-2" /></div>
+            <div><Label htmlFor="p1">Parent 1 Genotype</Label><Input id="p1" value={parent1} onChange={e => dispatch({type: 'SET_PARENT1', payload: e.target.value})} className="mt-2" /></div>
+            <div><Label htmlFor="p2">Parent 2 Genotype</Label><Input id="p2" value={parent2} onChange={e => dispatch({type: 'SET_PARENT2', payload: e.target.value})} className="mt-2" /></div>
             
             <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
                 <Button onClick={() => openExportModal(diagramContainerRef, 'punnett-square')}>

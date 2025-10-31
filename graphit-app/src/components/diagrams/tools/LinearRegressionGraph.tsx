@@ -69,8 +69,7 @@ export default function LinearRegressionGraph({ initialCsvData = defaultData }: 
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -82,7 +81,6 @@ export default function LinearRegressionGraph({ initialCsvData = defaultData }: 
                 {regressionLine && (<Line data={regressionLine} dataKey="y" stroke="var(--color-secondary)" strokeWidth={2} dot={false} name="Line of Best Fit" legendType="line" />)}
               </ComposedChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

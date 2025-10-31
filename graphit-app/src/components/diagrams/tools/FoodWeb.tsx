@@ -27,6 +27,10 @@ interface ClickParams {
   edges: IdType[];
 }
 
+interface FoodWebProps {
+    showExport?: boolean;
+}
+
 const Toolbar = ({ onModeChange, activeMode }: {
   onModeChange: (mode: ToolbarMode) => void;
   activeMode: string;
@@ -47,7 +51,7 @@ const Toolbar = ({ onModeChange, activeMode }: {
   );
 };
 
-export default function FoodWeb() {
+export default function FoodWeb({ showExport = true }: FoodWebProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
   const { resolvedTheme } = useTheme();
@@ -149,7 +153,9 @@ export default function FoodWeb() {
               <option value="tertiary">Tertiary Consumer</option>
             </Select>
             <Button onClick={addNode} className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4"/> Add Species</Button>
-            <Button onClick={() => openExportModal(containerRef, 'food-web')} variant="outline" className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4"/> Export</Button>
+            {showExport && (
+                <Button onClick={() => openExportModal(containerRef, 'food-web')} variant="outline" className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4"/> Export</Button>
+            )}
         </div>
         <p className="text-xs text-center text-text/60">Use the toolbar to switch modes. In delete mode, click any item to remove it.</p>
         <div className="flex-grow w-full h-full relative bg-neutral-dark/30 rounded-[var(--border-radius-apple)] overflow-hidden">

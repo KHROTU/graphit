@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -8,16 +8,31 @@ import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+type State = { moles: number; volume: number; };
+type Action = 
+    | { type: 'SET_MOLES', payload: number }
+    | { type: 'SET_VOLUME', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_MOLES': return { ...state, moles: action.payload };
+        case 'SET_VOLUME': return { ...state, volume: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (value: number | string) => {
-  if (typeof value === 'number') { return Number(value.toFixed(3)); }
+  if (typeof value === 'number') return Number(value.toFixed(3));
   return value;
 };
 
 const R = 0.0821;
 
 export default function GasLawGraph() {
-  const [moles, setMoles] = useState(1);
-  const [volume, setVolume] = useState(22.4);
+  const initialState: State = { moles: 1, volume: 22.4 };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { moles, volume } = state;
+  
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
 
@@ -37,15 +52,14 @@ export default function GasLawGraph() {
         <Card>
           <CardHeader><CardTitle>Gas Parameters</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div><Label>Moles of Gas (n): {moles.toFixed(2)}</Label><input type="range" min="0.1" max="5.0" step="0.1" value={moles} onChange={(e) => setMoles(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Volume (L): {volume.toFixed(1)}</Label><input type="range" min="5" max="50" step="0.5" value={volume} onChange={(e) => setVolume(Number(e.target.value))} className="w-full mt-2" /></div>
+              <div><Label>Moles of Gas (n): {moles.toFixed(2)}</Label><input type="range" min="0.1" max="5.0" step="0.1" value={moles} onChange={(e) => dispatch({ type: 'SET_MOLES', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
+              <div><Label>Volume (L): {volume.toFixed(1)}</Label><input type="range" min="5" max="50" step="0.5" value={volume} onChange={(e) => dispatch({ type: 'SET_VOLUME', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
               <Button onClick={() => openExportModal(diagramContainerRef, 'gas-law-graph')} className="w-full !mt-8"><Save className="mr-2 h-4 w-4" /> Save & Export</Button>
           </div>
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -56,7 +70,6 @@ export default function GasLawGraph() {
                     <Line type="monotone" dataKey="pressure" stroke="var(--color-accent)" strokeWidth={2} dot={false} name="Pressure vs. Temperature" />
                 </LineChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

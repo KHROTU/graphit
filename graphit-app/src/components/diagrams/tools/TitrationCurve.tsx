@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -16,15 +16,35 @@ interface TitrationProps {
   initialTitrantConc?: number;
 }
 
+type State = { analyteVolume: number; analyteConc: number; titrantConc: number; };
+type Action = 
+    | { type: 'SET_ANALYTE_VOLUME', payload: number }
+    | { type: 'SET_ANALYTE_CONC', payload: number }
+    | { type: 'SET_TITRANT_CONC', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_ANALYTE_VOLUME': return { ...state, analyteVolume: action.payload };
+        case 'SET_ANALYTE_CONC': return { ...state, analyteConc: action.payload };
+        case 'SET_TITRANT_CONC': return { ...state, titrantConc: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (value: number | string) => {
   if (typeof value === 'number') return Number(value.toFixed(2));
   return value;
 };
 
-export default function TitrationCurve({ initialAnalyteVolume = 25, initialAnalyteConc = 0.1, initialTitrantConc = 0.1 }: TitrationProps) {
-  const [analyteVolume, setAnalyteVolume] = useState(initialAnalyteVolume);
-  const [analyteConc, setAnalyteConc] = useState(initialAnalyteConc);
-  const [titrantConc, setTitrantConc] = useState(initialTitrantConc);
+export default function TitrationCurve(props: TitrationProps) {
+  const initialState: State = {
+      analyteVolume: props.initialAnalyteVolume || 25,
+      analyteConc: props.initialAnalyteConc || 0.1,
+      titrantConc: props.initialTitrantConc || 0.1,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { analyteVolume, analyteConc, titrantConc } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -39,9 +59,9 @@ export default function TitrationCurve({ initialAnalyteVolume = 25, initialAnaly
       const molesTitrantAdded = (titrantConc * vol) / 1000;
 
       if (vol < equivalenceVolume) { pH = -Math.log10((initialMolesAnalyte - molesTitrantAdded) / totalVolume); } 
-      else if (vol === equivalenceVolume) { pH = 7; } 
+      else if (Math.abs(vol - equivalenceVolume) < 1e-9) { pH = 7; } 
       else { pH = 14 - (-Math.log10((molesTitrantAdded - initialMolesAnalyte) / totalVolume)); }
-      chartData.push({ volume: vol, pH: pH > 0 ? pH : 0 });
+      chartData.push({ volume: vol, pH: pH > 0 && isFinite(pH) ? pH : 0 });
     }
     return { data: chartData, equivalencePoint: equivalenceVolume };
   }, [analyteVolume, analyteConc, titrantConc]);
@@ -58,9 +78,9 @@ export default function TitrationCurve({ initialAnalyteVolume = 25, initialAnaly
         <Card>
           <CardHeader><CardTitle>Titration Parameters</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div><Label>Analyte (Acid) Volume (mL): {analyteVolume}</Label><input type="range" min="10" max="50" step="1" value={analyteVolume} onChange={(e) => setAnalyteVolume(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Analyte (Acid) Conc. (M): {analyteConc.toFixed(2)}</Label><input type="range" min="0.05" max="0.5" step="0.01" value={analyteConc} onChange={(e) => setAnalyteConc(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Titrant (Base) Conc. (M): {titrantConc.toFixed(2)}</Label><input type="range" min="0.05" max="0.5" step="0.01" value={titrantConc} onChange={(e) => setTitrantConc(Number(e.target.value))} className="w-full mt-2" /></div>
+              <div><Label>Analyte (Acid) Volume (mL): {analyteVolume}</Label><input type="range" min="10" max="50" step="1" value={analyteVolume} onChange={(e) => dispatch({type: 'SET_ANALYTE_VOLUME', payload: Number(e.target.value)})} className="w-full mt-2" /></div>
+              <div><Label>Analyte (Acid) Conc. (M): {analyteConc.toFixed(2)}</Label><input type="range" min="0.05" max="0.5" step="0.01" value={analyteConc} onChange={(e) => dispatch({type: 'SET_ANALYTE_CONC', payload: Number(e.target.value)})} className="w-full mt-2" /></div>
+              <div><Label>Titrant (Base) Conc. (M): {titrantConc.toFixed(2)}</Label><input type="range" min="0.05" max="0.5" step="0.01" value={titrantConc} onChange={(e) => dispatch({type: 'SET_TITRANT_CONC', payload: Number(e.target.value)})} className="w-full mt-2" /></div>
               <div className="text-sm border-t border-neutral-dark/50 pt-4"><h4 className="font-semibold mb-2">Equivalence Point</h4><p>Volume: <span className="font-mono text-accent">{formatValue(equivalencePoint)} mL</span></p></div>
               <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
                 <Button onClick={() => openExportModal(diagramContainerRef, 'titration-curve')}>
@@ -74,8 +94,7 @@ export default function TitrationCurve({ initialAnalyteVolume = 25, initialAnaly
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -87,7 +106,6 @@ export default function TitrationCurve({ initialAnalyteVolume = 25, initialAnaly
                     <ReferenceLine x={equivalencePoint} stroke="var(--color-secondary)" strokeDasharray="3 3" label={{ value: 'Equivalence', position: 'insideTopRight', fill: 'var(--color-secondary)' }} />
                 </LineChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

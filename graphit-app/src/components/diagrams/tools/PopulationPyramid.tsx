@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
@@ -12,9 +12,15 @@ import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
 
 type PopulationPreset = 'expanding' | 'stable' | 'contracting';
+interface PopulationPyramidProps { initialPreset?: PopulationPreset; }
+type State = { preset: PopulationPreset; };
+type Action = { type: 'SET_PRESET', payload: PopulationPreset };
 
-interface PopulationPyramidProps {
-  initialPreset?: PopulationPreset;
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_PRESET': return { preset: action.payload };
+        default: return state;
+    }
 }
 
 const pyramidPresets: { [key in PopulationPreset]: { male: number[], female: number[] } } = {
@@ -24,8 +30,11 @@ const pyramidPresets: { [key in PopulationPreset]: { male: number[], female: num
 };
 const ageBrackets = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80-89', '90+'];
 
-export default function PopulationPyramid({ initialPreset = 'expanding' }: PopulationPyramidProps) {
-  const [preset, setPreset] = useState<PopulationPreset>(initialPreset);
+export default function PopulationPyramid(props: PopulationPyramidProps) {
+  const initialState: State = { preset: props.initialPreset || 'expanding' };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { preset } = state;
+  
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -35,19 +44,11 @@ export default function PopulationPyramid({ initialPreset = 'expanding' }: Popul
     return ageBrackets.map((age, i) => ({ age, Male: -presetData.male[i], Female: presetData.female[i] }));
   }, [preset]);
   
-  const maxAbsValue = useMemo(() => {
-    const allValues = data.flatMap(d => [Math.abs(d.Male), d.Female]);
-    return Math.ceil(Math.max(...allValues));
-  }, [data]);
+  const maxAbsValue = useMemo(() => Math.ceil(Math.max(...data.flatMap(d => [Math.abs(d.Male), d.Female]))), [data]);
 
-  const tooltipFormatter = (value: number | string) => {
-    if (typeof value === 'number') return `${Number(Math.abs(value).toFixed(1))}%`;
-    return value;
-  };
+  const tooltipFormatter = (value: number | string) => (typeof value === 'number') ? `${Number(Math.abs(value).toFixed(1))}%` : value;
 
-  const getDiagramState = () => ({
-    initialPreset: preset
-  });
+  const getDiagramState = () => ({ initialPreset: preset });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -57,7 +58,7 @@ export default function PopulationPyramid({ initialPreset = 'expanding' }: Popul
           <div className="p-6 space-y-6">
             <div>
               <Label>Population Structure</Label>
-              <Select value={preset} onChange={e => setPreset(e.target.value as PopulationPreset)} className="mt-2">
+              <Select value={preset} onChange={e => dispatch({type: 'SET_PRESET', payload: e.target.value as PopulationPreset})} className="mt-2">
                 <option value="expanding">Expanding</option>
                 <option value="stable">Stable</option>
                 <option value="contracting">Contracting</option>
@@ -75,12 +76,11 @@ export default function PopulationPyramid({ initialPreset = 'expanding' }: Popul
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 20 }} barCategoryGap="10%">
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-                  <XAxis type="number" tickFormatter={(value) => `${Math.abs(value)}%`} domain={[-maxAbsValue, maxAbsValue]} allowDataOverflow={true} stroke="var(--color-text)" />
+                  <XAxis type="number" tickFormatter={(value) => `${Math.abs(value as number)}%`} domain={[-maxAbsValue, maxAbsValue]} allowDataOverflow={true} stroke="var(--color-text)" />
                   <YAxis type="category" dataKey="age" width={50} tick={{ fontSize: 12, fill: 'var(--color-text)' }} stroke="var(--color-text)" />
                   <Tooltip formatter={tooltipFormatter} contentStyle={{ backgroundColor: 'var(--color-neutral)', border: '1px solid var(--color-neutral-dark)', borderRadius: 'var(--border-radius-apple)' }} />
                   <Legend wrapperStyle={{ color: 'var(--color-text)', top: 0 }} verticalAlign="top" />
@@ -88,7 +88,6 @@ export default function PopulationPyramid({ initialPreset = 'expanding' }: Popul
                   <Bar dataKey="Female" fill="var(--color-secondary)" radius={[0, 5, 5, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

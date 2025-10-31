@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
@@ -10,10 +10,41 @@ import { useExportModal } from '@/lib/context/ExportModalContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { parse } from 'mathjs';
 
-interface FunctionPlot {
-  id: number;
-  equation: string;
-  color: string;
+interface FunctionPlot { id: number; equation: string; color: string; }
+type State = {
+    plots: FunctionPlot[];
+    xDomain: { min: number; max: number };
+    yDomain: { min: number; max: number };
+};
+type Action = 
+    | { type: 'ADD_PLOT' }
+    | { type: 'UPDATE_PLOT', payload: { id: number, field: keyof FunctionPlot, value: string } }
+    | { type: 'REMOVE_PLOT', payload: { id: number } }
+    | { type: 'SET_DOMAIN', payload: { axis: 'x' | 'y', limit: 'min' | 'max', value: number } };
+
+const defaultColors = ['#38bdf8', '#f87171', '#34d399', '#a78bfa', '#facc15'];
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'ADD_PLOT': {
+            const newId = Date.now();
+            const newColor = defaultColors[state.plots.length % defaultColors.length];
+            return { ...state, plots: [...state.plots, { id: newId, equation: 'sin(x)', color: newColor }] };
+        }
+        case 'UPDATE_PLOT': {
+            const { id, field, value } = action.payload;
+            return { ...state, plots: state.plots.map(p => p.id === id ? { ...p, [field]: value } : p) };
+        }
+        case 'REMOVE_PLOT': {
+            return { ...state, plots: state.plots.filter(p => p.id !== action.payload.id) };
+        }
+        case 'SET_DOMAIN': {
+            const { axis, limit, value } = action.payload;
+            const domainKey = axis === 'x' ? 'xDomain' : 'yDomain';
+            return { ...state, [domainKey]: { ...state[domainKey], [limit]: value }};
+        }
+        default: return state;
+    }
 }
 
 const formatValue = (value: unknown): React.ReactNode => {
@@ -21,49 +52,35 @@ const formatValue = (value: unknown): React.ReactNode => {
   return String(value);
 };
 
-const defaultColors = ['#38bdf8', '#f87171', '#34d399', '#a78bfa', '#facc15'];
-
 export default function FunctionGraph() {
-  const [plots, setPlots] = useState<FunctionPlot[]>([
-    { id: 1, equation: '2*x + 1', color: defaultColors[0] },
-    { id: 2, equation: 'x^2 - 2*x - 3', color: defaultColors[1] },
-  ]);
-  const [xDomain, setXDomain] = useState({ min: -10, max: 10 });
-  const [yDomain, setYDomain] = useState({ min: -10, max: 10 });
+  const initialState: State = {
+      plots: [
+        { id: 1, equation: '2*x + 1', color: defaultColors[0] },
+        { id: 2, equation: 'x^2 - 2*x - 3', color: defaultColors[1] },
+      ],
+      xDomain: { min: -10, max: 10 },
+      yDomain: { min: -10, max: 10 },
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { plots, xDomain, yDomain } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
 
   const data = useMemo(() => {
     const chartData: { [key: string]: number }[] = [];
     const step = (xDomain.max - xDomain.min) / 200;
-
     for (let x = xDomain.min; x <= xDomain.max; x += step) {
       const point: { [key: string]: number } = { x: x };
       plots.forEach(plot => {
         try {
-          const node = parse(plot.equation);
-          const compiled = node.compile();
-          point[plot.id] = compiled.evaluate({ x: x });
-        } catch {
-          point[plot.id] = NaN;
-        }
+          point[plot.id] = parse(plot.equation).compile().evaluate({ x });
+        } catch { point[plot.id] = NaN; }
       });
       chartData.push(point);
     }
     return chartData;
   }, [plots, xDomain]);
-
-  const addPlot = () => {
-    const newId = Date.now();
-    const newColor = defaultColors[plots.length % defaultColors.length];
-    setPlots([...plots, { id: newId, equation: 'sin(x)', color: newColor }]);
-  };
-
-  const updatePlot = (id: number, field: keyof FunctionPlot, value: string) => {
-    setPlots(plots.map(p => p.id === id ? { ...p, [field]: value } : p));
-  };
-  
-  const removePlot = (id: number) => setPlots(plots.filter(p => p.id !== id));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -74,16 +91,22 @@ export default function FunctionGraph() {
             <Label className="font-semibold">Functions</Label>
             {plots.map(p => (
               <div key={p.id} className="flex items-center gap-2">
-                <Input type="color" value={p.color} onChange={e => updatePlot(p.id, 'color', e.target.value)} className="w-12 h-10 p-1" />
-                <Input value={p.equation} onChange={e => updatePlot(p.id, 'equation', e.target.value)} placeholder="y = ..." />
-                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => removePlot(p.id)}><Trash2 className="w-4 h-4 text-red-500"/></Button>
+                <Input type="color" value={p.color} onChange={e => dispatch({type: 'UPDATE_PLOT', payload: {id: p.id, field: 'color', value: e.target.value}})} className="w-12 h-10 p-1" />
+                <Input value={p.equation} onChange={e => dispatch({type: 'UPDATE_PLOT', payload: {id: p.id, field: 'equation', value: e.target.value}})} placeholder="y = ..." />
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => dispatch({type: 'REMOVE_PLOT', payload: {id: p.id}})}><Trash2 className="w-4 h-4 text-red-500"/></Button>
               </div>
             ))}
-            <Button variant="outline" onClick={addPlot} className="w-full"><Plus className="mr-2 h-4 w-4"/>Add Function</Button>
+            <Button variant="outline" onClick={() => dispatch({type: 'ADD_PLOT'})} className="w-full"><Plus className="mr-2 h-4 w-4"/>Add Function</Button>
             <div className="border-t border-neutral-dark/50 pt-4 space-y-2">
                 <Label className="font-semibold">Axis Domain</Label>
-                <div className="flex gap-2"><Input type="number" value={xDomain.min} onChange={e => setXDomain({...xDomain, min: Number(e.target.value)})} placeholder="X Min" /><Input type="number" value={xDomain.max} onChange={e => setXDomain({...xDomain, max: Number(e.target.value)})} placeholder="X Max" /></div>
-                <div className="flex gap-2"><Input type="number" value={yDomain.min} onChange={e => setYDomain({...yDomain, min: Number(e.target.value)})} placeholder="Y Min" /><Input type="number" value={yDomain.max} onChange={e => setYDomain({...yDomain, max: Number(e.target.value)})} placeholder="Y Max" /></div>
+                <div className="flex gap-2">
+                    <Input type="number" value={xDomain.min} onChange={e => dispatch({type: 'SET_DOMAIN', payload: {axis: 'x', limit: 'min', value: Number(e.target.value)}})} placeholder="X Min" />
+                    <Input type="number" value={xDomain.max} onChange={e => dispatch({type: 'SET_DOMAIN', payload: {axis: 'x', limit: 'max', value: Number(e.target.value)}})} placeholder="X Max" />
+                </div>
+                <div className="flex gap-2">
+                    <Input type="number" value={yDomain.min} onChange={e => dispatch({type: 'SET_DOMAIN', payload: {axis: 'y', limit: 'min', value: Number(e.target.value)}})} placeholder="Y Min" />
+                    <Input type="number" value={yDomain.max} onChange={e => dispatch({type: 'SET_DOMAIN', payload: {axis: 'y', limit: 'max', value: Number(e.target.value)}})} placeholder="Y Max" />
+                </div>
             </div>
           </div>
           <div className="p-4 border-t border-neutral-dark/30">
@@ -92,8 +115,7 @@ export default function FunctionGraph() {
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -103,10 +125,9 @@ export default function FunctionGraph() {
                 <Legend />
                 <ReferenceLine y={0} stroke="var(--color-text)" strokeWidth={1} strokeOpacity={0.5}/>
                 <ReferenceLine x={0} stroke="var(--color-text)" strokeWidth={1} strokeOpacity={0.5}/>
-                {plots.map(p => <Line key={p.id} type="monotone" dataKey={p.id} stroke={p.color} strokeWidth={2} dot={false} name={`y = ${p.equation}`} />)}
+                {plots.map(p => <Line key={p.id} type="monotone" dataKey={String(p.id)} stroke={p.color} strokeWidth={2} dot={false} name={`y = ${p.equation}`} connectNulls />)}
               </LineChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
@@ -18,23 +18,41 @@ interface IntegrationProps {
   initialLowerBound?: number;
   initialUpperBound?: number;
 }
+type State = { equation: string; strips: number; lowerBound: number; upperBound: number; };
+type Action = 
+    | { type: 'SET_EQUATION', payload: string }
+    | { type: 'SET_STRIPS', payload: number }
+    | { type: 'SET_LOWER_BOUND', payload: number }
+    | { type: 'SET_UPPER_BOUND', payload: number };
 
-export default function NumericalIntegrationGraph({ initialEquation = 'x^2 + 2', initialStrips = 4, initialLowerBound = 0, initialUpperBound = 8 }: IntegrationProps) {
-  const [equation, setEquation] = useState(initialEquation);
-  const [strips, setStrips] = useState(initialStrips);
-  const [lowerBound, setLowerBound] = useState(initialLowerBound);
-  const [upperBound, setUpperBound] = useState(initialUpperBound);
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_EQUATION': return { ...state, equation: action.payload };
+        case 'SET_STRIPS': return { ...state, strips: action.payload };
+        case 'SET_LOWER_BOUND': return { ...state, lowerBound: action.payload };
+        case 'SET_UPPER_BOUND': return { ...state, upperBound: action.payload };
+        default: return state;
+    }
+}
+
+export default function NumericalIntegrationGraph(props: IntegrationProps) {
+  const initialState: State = {
+      equation: props.initialEquation || 'x^2 + 2',
+      strips: props.initialStrips || 4,
+      lowerBound: props.initialLowerBound || 0,
+      upperBound: props.initialUpperBound || 8,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { equation, strips, lowerBound, upperBound } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
 
   const { curveData, trapezoids, area, exactArea } = useMemo(() => {
     let fn;
-    try {
-      fn = parse(equation).compile();
-    } catch {
-      return { curveData: [], trapezoids: [], area: 0, exactArea: NaN };
-    }
+    try { fn = parse(equation).compile(); } 
+    catch { return { curveData: [], trapezoids: [], area: 0, exactArea: NaN }; }
     
     const data = [];
     const step = (upperBound - lowerBound) / 100;
@@ -54,15 +72,16 @@ export default function NumericalIntegrationGraph({ initialEquation = 'x^2 + 2',
       trapz.push({ x: x1, y: y1, x2: x2, y2: y2 });
     }
     
-    // Rudimentary exact area for polynomials like x^n
     let exArea = NaN;
-    if (equation.match(/^x\^(\d+)/)) {
-        const n = Number(equation.match(/^x\^(\d+)/)?.[1]);
-        const integral = (x:number) => Math.pow(x, n + 1) / (n + 1);
-        exArea = integral(upperBound) - integral(lowerBound);
-    } else if (equation.match(/^\d+$/)) {
-        exArea = Number(equation) * (upperBound - lowerBound);
-    }
+    try {
+        if (equation.match(/^x\^(\d+)/)) {
+            const n = Number(equation.match(/^x\^(\d+)/)?.[1]);
+            const integral = (x:number) => Math.pow(x, n + 1) / (n + 1);
+            exArea = integral(upperBound) - integral(lowerBound);
+        } else if (equation.match(/^\d+$/)) {
+            exArea = Number(equation) * (upperBound - lowerBound);
+        }
+    } catch {}
     
     return { curveData: data, trapezoids: trapz, area: currentArea, exactArea: exArea };
   }, [equation, strips, lowerBound, upperBound]);
@@ -75,30 +94,28 @@ export default function NumericalIntegrationGraph({ initialEquation = 'x^2 + 2',
         <Card>
           <CardHeader><CardTitle>Trapezium Rule Integration</CardTitle></CardHeader>
           <div className="p-6 space-y-4">
-            <div><Label>Function y =</Label><Input value={equation} onChange={e => setEquation(e.target.value)} /></div>
-            <div><Label>Number of Strips: {strips}</Label><input type="range" min="1" max="20" value={strips} onChange={e => setStrips(Number(e.target.value))} className="w-full" /></div>
-            <div className="flex gap-2"><div className="flex-1"><Label>Lower Bound</Label><Input type="number" value={lowerBound} onChange={e => setLowerBound(Number(e.target.value))} /></div><div className="flex-1"><Label>Upper Bound</Label><Input type="number" value={upperBound} onChange={e => setUpperBound(Number(e.target.value))} /></div></div>
+            <div><Label>Function y =</Label><Input value={equation} onChange={e => dispatch({type: 'SET_EQUATION', payload: e.target.value})} /></div>
+            <div><Label>Number of Strips: {strips}</Label><input type="range" min="1" max="20" value={strips} onChange={e => dispatch({type: 'SET_STRIPS', payload: Number(e.target.value)})} className="w-full" /></div>
+            <div className="flex gap-2"><div className="flex-1"><Label>Lower Bound</Label><Input type="number" value={lowerBound} onChange={e => dispatch({type: 'SET_LOWER_BOUND', payload: Number(e.target.value)})} /></div><div className="flex-1"><Label>Upper Bound</Label><Input type="number" value={upperBound} onChange={e => dispatch({type: 'SET_UPPER_BOUND', payload: Number(e.target.value)})} /></div></div>
             <div className="text-sm border-t border-neutral-dark/50 pt-4"><h4 className="font-semibold mb-2">Area Approximation</h4><p>Estimated Area: <span className="font-mono text-accent">{area.toFixed(4)}</span></p>{!isNaN(exactArea) && <p>Exact Area: <span className="font-mono text-secondary">{exactArea.toFixed(4)}</span></p>}</div>
             <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30"><Button onClick={() => openExportModal(diagramContainerRef, 'numerical-integration-graph')}><Save className="mr-2 h-4 w-4"/> Save & Export Image</Button>{session?.isLoggedIn && (<SaveGraphButton diagramName="Numerical Integration" getDiagramState={getDiagramState} />)}</div>
           </div>
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={curveData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
                 <XAxis type="number" dataKey="x" domain={[lowerBound, upperBound]} />
                 <YAxis domain={[0, 'dataMax + 10']} />
                 <Tooltip />
-                <Area type="monotone" dataKey="y" stroke="var(--color-accent)" fill="var(--color-accent)" fillOpacity={0.3} strokeWidth={2} name={equation} dot={false} />
+                <Area type="monotone" dataKey="y" stroke="var(--color-accent)" fill="var(--color-accent)" fillOpacity={0.3} strokeWidth={2} name={equation} dot={false} connectNulls />
                 {trapezoids.map((trap, i) => (<ReferenceLine key={i} segment={[{ x: trap.x, y: 0 }, { x: trap.x, y: trap.y }]} stroke="var(--color-secondary)" strokeDasharray="2 2" />))}
                 {trapezoids.map((trap, i) => (<ReferenceLine key={i} segment={[{ x: trap.x, y: trap.y }, { x: trap.x2, y: trap.y2 }]} stroke="var(--color-secondary)" />))}
                 <ReferenceLine x={upperBound} stroke="var(--color-secondary)" strokeDasharray="2 2" />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

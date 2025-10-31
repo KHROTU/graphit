@@ -22,9 +22,10 @@ export default function BarChartTool() {
     const headers = lines[0].split(',').map(h => h.trim());
     return lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.trim());
+      const value = parseFloat(values[1]);
       return {
         [headers[0]]: values[0],
-        [headers[1]]: parseFloat(values[1]),
+        [headers[1]]: isNaN(value) ? 0 : value,
       };
     });
   }, [csvData]);
@@ -46,8 +47,7 @@ export default function BarChartTool() {
         </Card>
       </div>
       <div className="md:col-span-2">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -60,7 +60,6 @@ export default function BarChartTool() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

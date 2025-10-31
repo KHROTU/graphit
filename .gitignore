@@ -37,3 +37,6 @@ next-env.d.ts
 
 export.ps1
 project_context.txt
+# Auto-added by export script
+.exportignore.json
+context.txt

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useReducer, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
@@ -19,48 +19,59 @@ interface MicroscopyProps {
   initialMagnification?: string;
 }
 
+type State = { image: ValueUnit; actual: ValueUnit; magnification: string; result: string; };
+type Action = 
+    | { type: 'SET_IMAGE', payload: Partial<ValueUnit> }
+    | { type: 'SET_ACTUAL', payload: Partial<ValueUnit> }
+    | { type: 'SET_MAGNIFICATION', payload: string }
+    | { type: 'CALCULATE' }
+    | { type: 'RESET' };
+    
 const conversionFactors: Record<Unit, number> = { mm: 1_000_000, 'μm': 1_000, nm: 1 };
 
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_IMAGE': return { ...state, image: { ...state.image, ...action.payload }};
+        case 'SET_ACTUAL': return { ...state, actual: { ...state.actual, ...action.payload }};
+        case 'SET_MAGNIFICATION': return { ...state, magnification: action.payload };
+        case 'RESET': return { image: { value: '', unit: 'mm' }, actual: { value: '', unit: 'μm' }, magnification: '', result: '' };
+        case 'CALCULATE': {
+            const i = parseFloat(state.image.value);
+            const a = parseFloat(state.actual.value);
+            const m = parseFloat(state.magnification);
+            const i_nm = i * conversionFactors[state.image.unit];
+            const a_nm = a * conversionFactors[state.actual.unit];
+            const formatNumber = (num: number) => (num < 0.01 && num > 0) ? num.toExponential(2) : Number(num.toFixed(2)).toString();
+
+            if (!state.magnification && state.image.value && state.actual.value) {
+                return { ...state, result: `Magnification = ${formatNumber(i_nm / a_nm)}x` };
+            } else if (!state.actual.value && state.image.value && state.magnification) {
+                const actualNm = i_nm / m;
+                return { ...state, result: `Actual Size = ${formatNumber(actualNm / conversionFactors[state.actual.unit])} ${state.actual.unit}` };
+            } else if (!state.image.value && state.actual.value && state.magnification) {
+                const imageNm = a_nm * m;
+                return { ...state, result: `Image Size = ${formatNumber(imageNm / conversionFactors[state.image.unit])} ${state.image.unit}` };
+            } else {
+                return { ...state, result: 'Please provide two values to calculate the third.' };
+            }
+        }
+        default: return state;
+    }
+}
+
 export default function MicroscopyCalculator(props: MicroscopyProps) {
-  const [image, setImage] = useState<ValueUnit>(props.initialImage || { value: '', unit: 'mm' });
-  const [actual, setActual] = useState<ValueUnit>(props.initialActual || { value: '', unit: 'μm' });
-  const [magnification, setMagnification] = useState(props.initialMagnification || '');
-  const [result, setResult] = useState('');
+  const initialState: State = {
+      image: props.initialImage || { value: '', unit: 'mm' },
+      actual: props.initialActual || { value: '', unit: 'μm' },
+      magnification: props.initialMagnification || '',
+      result: '',
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { image, actual, magnification, result } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
-
-  const calculate = () => {
-    const i = parseFloat(image.value);
-    const a = parseFloat(actual.value);
-    const m = parseFloat(magnification);
-    const i_nm = i * conversionFactors[image.unit];
-    const a_nm = a * conversionFactors[actual.unit];
-
-    if (!magnification && image.value && actual.value) {
-      setResult(`Magnification = ${formatNumber(i_nm / a_nm)}x`);
-    } else if (!actual.value && image.value && magnification) {
-      const actualNm = i_nm / m;
-      setResult(`Actual Size = ${formatNumber(actualNm / conversionFactors[actual.unit])} ${actual.unit}`);
-    } else if (!image.value && actual.value && magnification) {
-      const imageNm = a_nm * m;
-      setResult(`Image Size = ${formatNumber(imageNm / conversionFactors[image.unit])} ${image.unit}`);
-    } else {
-      setResult('Please provide two values to calculate the third.');
-    }
-  };
-
-  const formatNumber = (num: number) => {
-    if (num < 0.01 && num > 0) return num.toExponential(2);
-    return Number(num.toFixed(2)).toString();
-  };
-
-  const reset = () => {
-    setImage({ value: '', unit: 'mm' });
-    setActual({ value: '', unit: 'μm' });
-    setMagnification('');
-    setResult('');
-  };
 
   const getDiagramState = () => ({
     initialImage: image, initialActual: actual, initialMagnification: magnification,
@@ -74,14 +85,14 @@ export default function MicroscopyCalculator(props: MicroscopyProps) {
           <div className="p-6 space-y-4">
             <div>
               <Label>Image Size (I)</Label>
-              <div className="flex gap-2"><Input type="number" placeholder="e.g., 50" value={image.value} onChange={e => setImage({...image, value: e.target.value})} /><Select value={image.unit} onChange={e => setImage({...image, unit: e.target.value as Unit})}><option>mm</option><option>μm</option><option>nm</option></Select></div>
+              <div className="flex gap-2"><Input type="number" placeholder="e.g., 50" value={image.value} onChange={e => dispatch({type: 'SET_IMAGE', payload: { value: e.target.value }})} /><Select value={image.unit} onChange={e => dispatch({type: 'SET_IMAGE', payload: { unit: e.target.value as Unit }})}><option>mm</option><option>μm</option><option>nm</option></Select></div>
             </div>
             <div>
               <Label>Actual Size (A)</Label>
-              <div className="flex gap-2"><Input type="number" placeholder="e.g., 100" value={actual.value} onChange={e => setActual({...actual, value: e.target.value})} /><Select value={actual.unit} onChange={e => setActual({...actual, unit: e.target.value as Unit})}><option>mm</option><option>μm</option><option>nm</option></Select></div>
+              <div className="flex gap-2"><Input type="number" placeholder="e.g., 100" value={actual.value} onChange={e => dispatch({type: 'SET_ACTUAL', payload: { value: e.target.value }})} /><Select value={actual.unit} onChange={e => dispatch({type: 'SET_ACTUAL', payload: { unit: e.target.value as Unit }})}><option>mm</option><option>μm</option><option>nm</option></Select></div>
             </div>
-            <div><Label>Magnification (M)</Label><Input type="number" placeholder="e.g., 1000" value={magnification} onChange={e => setMagnification(e.target.value)} /></div>
-            <div className="flex gap-2 pt-2"><Button onClick={calculate} className="flex-grow"><Calculator className="mr-2 h-4 w-4"/> Calculate</Button><Button onClick={reset} variant="ghost"><XCircle className="h-4 w-4"/></Button></div>
+            <div><Label>Magnification (M)</Label><Input type="number" placeholder="e.g., 1000" value={magnification} onChange={e => dispatch({type: 'SET_MAGNIFICATION', payload: e.target.value})} /></div>
+            <div className="flex gap-2 pt-2"><Button onClick={() => dispatch({type: 'CALCULATE'})} className="flex-grow"><Calculator className="mr-2 h-4 w-4"/> Calculate</Button><Button onClick={() => dispatch({type: 'RESET'})} variant="ghost"><XCircle className="h-4 w-4"/></Button></div>
             {result && <div className="p-3 bg-accent/20 text-accent font-bold rounded-lg text-center">{result}</div>}
             <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
               <Button onClick={() => openExportModal(diagramContainerRef, 'microscopy-calculator')}><Save className="mr-2 h-4 w-4" /> Save & Export Image</Button>

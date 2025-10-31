@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
@@ -15,14 +15,32 @@ interface EnergyProfileProps {
   initialDeltaH?: number;
 }
 
+type State = { activationEnergy: number; deltaH: number; };
+type Action = 
+    | { type: 'SET_ACTIVATION_ENERGY', payload: number }
+    | { type: 'SET_DELTA_H', payload: number };
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'SET_ACTIVATION_ENERGY': return { ...state, activationEnergy: action.payload };
+        case 'SET_DELTA_H': return { ...state, deltaH: action.payload };
+        default: return state;
+    }
+}
+
 const formatValue = (value: unknown): React.ReactNode => {
   if (typeof value === 'number') return Number(value.toFixed(1));
   return String(value);
 };
 
-export default function EnergyProfileDiagram({ initialActivationEnergy = 50, initialDeltaH = -30 }: EnergyProfileProps) {
-  const [activationEnergy, setActivationEnergy] = useState(initialActivationEnergy);
-  const [deltaH, setDeltaH] = useState(initialDeltaH);
+export default function EnergyProfileDiagram(props: EnergyProfileProps) {
+  const initialState: State = {
+      activationEnergy: props.initialActivationEnergy || 50,
+      deltaH: props.initialDeltaH || -30,
+  };
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { activationEnergy, deltaH } = state;
+
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
@@ -31,13 +49,11 @@ export default function EnergyProfileDiagram({ initialActivationEnergy = 50, ini
     const startLevel = 50;
     const endLevel = startLevel + deltaH;
     const transitionLevel = startLevel + activationEnergy;
-    
     const chartData = [
       { progress: 0,   energy: startLevel }, { progress: 20,  energy: startLevel },
       { progress: 50,  energy: transitionLevel }, { progress: 80,  energy: endLevel },
       { progress: 100, energy: endLevel },
     ];
-
     return { data: chartData, reactantsLevel: startLevel, productsLevel: endLevel, peakLevel: transitionLevel };
   }, [activationEnergy, deltaH]);
 
@@ -55,8 +71,8 @@ export default function EnergyProfileDiagram({ initialActivationEnergy = 50, ini
         <Card>
           <CardHeader><CardTitle>Reaction Parameters</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-              <div><Label>Activation Energy (Ea): {activationEnergy} kJ/mol</Label><input type="range" min="10" max="100" value={activationEnergy} onChange={(e) => setActivationEnergy(Number(e.target.value))} className="w-full mt-2" /></div>
-              <div><Label>Enthalpy Change (ΔH): {deltaH} kJ/mol</Label><input type="range" min="-50" max="50" value={deltaH} onChange={(e) => setDeltaH(Number(e.target.value))} className="w-full mt-2" /></div>
+              <div><Label>Activation Energy (Ea): {activationEnergy} kJ/mol</Label><input type="range" min="10" max="100" value={activationEnergy} onChange={(e) => dispatch({ type: 'SET_ACTIVATION_ENERGY', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
+              <div><Label>Enthalpy Change (ΔH): {deltaH} kJ/mol</Label><input type="range" min="-50" max="50" value={deltaH} onChange={(e) => dispatch({ type: 'SET_DELTA_H', payload: Number(e.target.value) })} className="w-full mt-2" /></div>
               <div className="text-sm border-t border-neutral-dark/50 pt-4"><h4 className="font-semibold mb-2">Reaction Type</h4><p className={deltaH < 0 ? 'text-accent font-bold' : 'text-secondary font-bold'}>{deltaH < 0 ? 'Exothermic' : 'Endothermic'}</p></div>
               <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
                 <Button onClick={() => openExportModal(diagramContainerRef, 'energy-profile-diagram')}>
@@ -70,8 +86,7 @@ export default function EnergyProfileDiagram({ initialActivationEnergy = 50, ini
         </Card>
       </div>
       <div className="md:col-span-2 min-h-[400px]">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} data-testid="diagram-container" className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
@@ -85,7 +100,6 @@ export default function EnergyProfileDiagram({ initialActivationEnergy = 50, ini
                     <ReferenceLine segment={[{ x: 90, y: reactantsLevel }, { x: 90, y: productsLevel }]} stroke="var(--color-secondary)" strokeDasharray="3 3"><RechartsLabel value="ΔH" position="right" fill="var(--color-secondary)" fontSize={14} /></ReferenceLine>
                 </AreaChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>

@@ -71,8 +71,7 @@ export default function ScatterPlotTool() {
         </Card>
       </div>
       <div className="md:col-span-2">
-        <Card className="h-full !p-4">
-          <div ref={diagramContainerRef} className="w-full h-full">
+        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -86,7 +85,6 @@ export default function ScatterPlotTool() {
                 )}
               </ComposedChart>
             </ResponsiveContainer>
-          </div>
         </Card>
       </div>
     </div>
