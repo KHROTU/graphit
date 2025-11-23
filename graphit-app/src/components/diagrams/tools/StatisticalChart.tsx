@@ -4,11 +4,11 @@ import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface DataPoint { id: number; name: string; value: number; }
 type ChartType = 'bar' | 'pie' | 'histogram';
@@ -25,6 +25,12 @@ type Action =
     | { type: 'REMOVE_DATA_POINT', payload: { id: number } }
     | { type: 'SET_RAW_DATA', payload: string }
     | { type: 'SET_BIN_COUNT', payload: number };
+
+const chartTypeOptions = [
+    { value: 'bar', label: 'Bar Chart' },
+    { value: 'pie', label: 'Pie Chart' },
+    { value: 'histogram', label: 'Histogram' },
+];
 
 function reducer(state: State, action: Action): State {
     switch(action.type) {
@@ -127,13 +133,13 @@ export default function StatisticalChart() {
         <Card>
           <CardHeader><CardTitle>Chart Data & Type</CardTitle></CardHeader>
           <div className="p-4 space-y-4">
-            <div>
+            <div className="space-y-2">
                 <Label>Chart Type</Label>
-                <Select value={chartType} onChange={e => dispatch({type: 'SET_CHART_TYPE', payload: e.target.value as ChartType})}>
-                    <option value="bar">Bar Chart</option>
-                    <option value="pie">Pie Chart</option>
-                    <option value="histogram">Histogram</option>
-                </Select>
+                <CustomSelect 
+                    value={chartType} 
+                    onChange={val => dispatch({type: 'SET_CHART_TYPE', payload: val as ChartType})}
+                    options={chartTypeOptions}
+                />
             </div>
           </div>
           <div className="p-4 border-t border-neutral-dark/50 space-y-2 max-h-[400px] overflow-y-auto">

@@ -3,52 +3,92 @@
 import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
-import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
-type PopulationPreset = 'expanding' | 'stable' | 'contracting';
-interface PopulationPyramidProps { initialPreset?: PopulationPreset; }
-type State = { preset: PopulationPreset; };
-type Action = { type: 'SET_PRESET', payload: PopulationPreset };
+type PopulationPreset = 'expanding' | 'stable' | 'contracting' | 'custom';
+interface PopulationPyramidProps { initialPreset?: PopulationPreset; initialCustomData?: { male: string, female: string } }
+
+type State = { 
+    preset: PopulationPreset;
+    customMaleStr: string;
+    customFemaleStr: string;
+};
+
+type Action = 
+    | { type: 'SET_PRESET', payload: PopulationPreset }
+    | { type: 'SET_CUSTOM_MALE', payload: string }
+    | { type: 'SET_CUSTOM_FEMALE', payload: string };
 
 function reducer(state: State, action: Action): State {
     switch(action.type) {
-        case 'SET_PRESET': return { preset: action.payload };
+        case 'SET_PRESET': return { ...state, preset: action.payload };
+        case 'SET_CUSTOM_MALE': return { ...state, customMaleStr: action.payload };
+        case 'SET_CUSTOM_FEMALE': return { ...state, customFemaleStr: action.payload };
         default: return state;
     }
 }
 
-const pyramidPresets: { [key in PopulationPreset]: { male: number[], female: number[] } } = {
+const pyramidPresets: { [key in Exclude<PopulationPreset, 'custom'>]: { male: number[], female: number[] } } = {
   expanding: { male: [10,9,8,7,6,5,4,3,2,1], female: [9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5] },
   stable:    { male: [6,6.5,7,7.5,7,6.5,6,5,4,3], female: [5.8,6.3,6.8,7.3,6.8,6.3,5.8,4.8,3.8,2.8] },
   contracting: { male: [4,4.5,5,6,7,8,8,7,6,5], female: [3.9,4.4,4.9,5.9,6.9,7.9,7.9,6.9,5.9,4.9] },
 };
 const ageBrackets = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80-89', '90+'];
 
+const pyramidOptions = [
+    { value: 'expanding', label: 'Expanding (Stage 2)' },
+    { value: 'stable', label: 'Stable (Stage 3/4)' },
+    { value: 'contracting', label: 'Contracting (Stage 5)' },
+    { value: 'custom', label: 'Custom Data' },
+];
+
 export default function PopulationPyramid(props: PopulationPyramidProps) {
-  const initialState: State = { preset: props.initialPreset || 'expanding' };
+  const initialState: State = { 
+      preset: props.initialPreset || 'expanding',
+      customMaleStr: props.initialCustomData?.male || '5, 5, 6, 6, 7, 7, 6, 5, 3, 1',
+      customFemaleStr: props.initialCustomData?.female || '5, 5, 6, 6, 7, 7, 6, 5, 4, 2',
+  };
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { preset } = state;
+  const { preset, customMaleStr, customFemaleStr } = state;
   
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
   const { session } = useSession();
 
   const data = useMemo(() => {
-    const presetData = pyramidPresets[preset];
-    return ageBrackets.map((age, i) => ({ age, Male: -presetData.male[i], Female: presetData.female[i] }));
-  }, [preset]);
+    let male: number[], female: number[];
+
+    if (preset === 'custom') {
+        male = customMaleStr.split(',').map(s => parseFloat(s.trim()) || 0);
+        female = customFemaleStr.split(',').map(s => parseFloat(s.trim()) || 0);
+        while(male.length < 10) male.push(0);
+        while(female.length < 10) female.push(0);
+    } else {
+        const pData = pyramidPresets[preset];
+        male = pData.male;
+        female = pData.female;
+    }
+
+    return ageBrackets.map((age, i) => ({ age, Male: -male[i], Female: female[i] }));
+  }, [preset, customMaleStr, customFemaleStr]);
   
-  const maxAbsValue = useMemo(() => Math.ceil(Math.max(...data.flatMap(d => [Math.abs(d.Male), d.Female]))), [data]);
+  const maxAbsValue = useMemo(() => {
+      const max = Math.ceil(Math.max(...data.flatMap(d => [Math.abs(d.Male), d.Female])));
+      return max < 5 ? 5 : max; 
+  }, [data]);
 
   const tooltipFormatter = (value: number | string) => (typeof value === 'number') ? `${Number(Math.abs(value).toFixed(1))}%` : value;
 
-  const getDiagramState = () => ({ initialPreset: preset });
+  const getDiagramState = () => ({ 
+      initialPreset: preset,
+      initialCustomData: { male: customMaleStr, female: customFemaleStr }
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -56,14 +96,39 @@ export default function PopulationPyramid(props: PopulationPyramidProps) {
         <Card>
           <CardHeader><CardTitle>Configuration</CardTitle></CardHeader>
           <div className="p-6 space-y-6">
-            <div>
+            <div className="space-y-2">
               <Label>Population Structure</Label>
-              <Select value={preset} onChange={e => dispatch({type: 'SET_PRESET', payload: e.target.value as PopulationPreset})} className="mt-2">
-                <option value="expanding">Expanding</option>
-                <option value="stable">Stable</option>
-                <option value="contracting">Contracting</option>
-              </Select>
+              <CustomSelect 
+                value={preset} 
+                onChange={val => dispatch({type: 'SET_PRESET', payload: val as PopulationPreset})}
+                options={pyramidOptions}
+              />
             </div>
+
+            {preset === 'custom' && (
+                  <div className="space-y-4 animate-fadeIn">
+                      <div className="space-y-2">
+                          <Label>Male % (Young to Old)</Label>
+                          <textarea 
+                            value={customMaleStr} 
+                            onChange={e => dispatch({type: 'SET_CUSTOM_MALE', payload: e.target.value})}
+                            placeholder="e.g., 10, 9, 8..."
+                            className="w-full h-20 p-2 text-sm bg-transparent border border-neutral-dark rounded-[var(--border-radius-apple)] font-mono focus:outline-none focus:ring-2 focus:ring-accent/50"
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <Label>Female % (Young to Old)</Label>
+                          <textarea 
+                            value={customFemaleStr} 
+                            onChange={e => dispatch({type: 'SET_CUSTOM_FEMALE', payload: e.target.value})}
+                            placeholder="e.g., 9.5, 8.5, 7.5..."
+                            className="w-full h-20 p-2 text-sm bg-transparent border border-neutral-dark rounded-[var(--border-radius-apple)] font-mono focus:outline-none focus:ring-2 focus:ring-accent/50"
+                          />
+                      </div>
+                      <p className="text-xs text-text/60">Enter 10 values corresponding to age groups: 0-9, 10-19, ... 90+</p>
+                  </div>
+              )}
+
              <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
                 <Button onClick={() => openExportModal(diagramContainerRef, 'population-pyramid')}>
                     <Save className="mr-2 h-4 w-4" /> Save & Export Image

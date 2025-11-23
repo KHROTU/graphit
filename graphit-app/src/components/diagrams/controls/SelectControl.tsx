@@ -2,31 +2,28 @@
 
 import React from 'react';
 import { Label } from '@/components/ui/Label';
-import { Select } from '@/components/ui/Select';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
-interface SelectControlProps<T extends string> extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectControlProps<T extends string> {
   label: string;
   value: T;
   onValueChange: (value: T) => void;
   options: { value: T; label: string }[];
   helpText?: string;
+  className?: string;
 }
 
-export function SelectControl<T extends string>({ label, value, onValueChange, options, helpText, ...props }: SelectControlProps<T>) {
+export function SelectControl<T extends string>({ label, value, onValueChange, options, helpText, className }: SelectControlProps<T>) {
   return (
-    <div>
+    <div className={className}>
       <Label>{label}</Label>
       {helpText && <p className="text-xs text-text/60 mb-2">{helpText}</p>}
-      <Select
+      <CustomSelect
         value={value}
-        onChange={(e) => onValueChange(e.target.value as T)}
+        onChange={(val) => onValueChange(val as T)}
+        options={options}
         className="mt-1"
-        {...props}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </Select>
+      />
     </div>
   );
 }

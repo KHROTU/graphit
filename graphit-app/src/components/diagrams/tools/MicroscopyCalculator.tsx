@@ -4,12 +4,12 @@ import React, { useReducer, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Save, Calculator, XCircle } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 type Unit = 'mm' | 'μm' | 'nm';
 interface ValueUnit { value: string; unit: Unit; }
@@ -28,6 +28,11 @@ type Action =
     | { type: 'RESET' };
     
 const conversionFactors: Record<Unit, number> = { mm: 1_000_000, 'μm': 1_000, nm: 1 };
+const unitOptions = [
+    { value: 'mm', label: 'mm' },
+    { value: 'μm', label: 'μm' },
+    { value: 'nm', label: 'nm' }
+];
 
 function reducer(state: State, action: Action): State {
     switch(action.type) {
@@ -85,11 +90,17 @@ export default function MicroscopyCalculator(props: MicroscopyProps) {
           <div className="p-6 space-y-4">
             <div>
               <Label>Image Size (I)</Label>
-              <div className="flex gap-2"><Input type="number" placeholder="e.g., 50" value={image.value} onChange={e => dispatch({type: 'SET_IMAGE', payload: { value: e.target.value }})} /><Select value={image.unit} onChange={e => dispatch({type: 'SET_IMAGE', payload: { unit: e.target.value as Unit }})}><option>mm</option><option>μm</option><option>nm</option></Select></div>
+              <div className="flex gap-2">
+                <Input type="number" placeholder="e.g., 50" value={image.value} onChange={e => dispatch({type: 'SET_IMAGE', payload: { value: e.target.value }})} />
+                <CustomSelect value={image.unit} onChange={val => dispatch({type: 'SET_IMAGE', payload: { unit: val as Unit }})} options={unitOptions} />
+              </div>
             </div>
             <div>
               <Label>Actual Size (A)</Label>
-              <div className="flex gap-2"><Input type="number" placeholder="e.g., 100" value={actual.value} onChange={e => dispatch({type: 'SET_ACTUAL', payload: { value: e.target.value }})} /><Select value={actual.unit} onChange={e => dispatch({type: 'SET_ACTUAL', payload: { unit: e.target.value as Unit }})}><option>mm</option><option>μm</option><option>nm</option></Select></div>
+              <div className="flex gap-2">
+                <Input type="number" placeholder="e.g., 100" value={actual.value} onChange={e => dispatch({type: 'SET_ACTUAL', payload: { value: e.target.value }})} />
+                <CustomSelect value={actual.unit} onChange={val => dispatch({type: 'SET_ACTUAL', payload: { unit: val as Unit }})} options={unitOptions} />
+              </div>
             </div>
             <div><Label>Magnification (M)</Label><Input type="number" placeholder="e.g., 1000" value={magnification} onChange={e => dispatch({type: 'SET_MAGNIFICATION', payload: e.target.value})} /></div>
             <div className="flex gap-2 pt-2"><Button onClick={() => dispatch({type: 'CALCULATE'})} className="flex-grow"><Calculator className="mr-2 h-4 w-4"/> Calculate</Button><Button onClick={() => dispatch({type: 'RESET'})} variant="ghost"><XCircle className="h-4 w-4"/></Button></div>

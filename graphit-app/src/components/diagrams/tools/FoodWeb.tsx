@@ -8,8 +8,8 @@ import { useTheme } from 'next-themes';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Plus, Download, Link2, Trash2, MousePointer } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface FoodWebNode extends Node { id: string; label: string; group: 'producer' | 'primary' | 'secondary' | 'tertiary'; }
 const initialNodesData: FoodWebNode[] = [
@@ -65,6 +65,13 @@ export default function FoodWeb({ showExport = true }: FoodWebProps) {
   const [newNodeLabel, setNewNodeLabel] = useState('');
   const [newNodeGroup, setNewNodeGroup] = useState<FoodWebNode['group']>('primary');
   const [activeMode, setActiveMode] = useState<ToolbarMode>('navigate');
+
+  const nodeGroupOptions = [
+    { value: 'producer', label: 'Producer' },
+    { value: 'primary', label: 'Primary Consumer' },
+    { value: 'secondary', label: 'Secondary Consumer' },
+    { value: 'tertiary', label: 'Tertiary Consumer' },
+  ];
 
   const addNode = useCallback(() => {
     if (!newNodeLabel.trim()) return;
@@ -146,12 +153,12 @@ export default function FoodWeb({ showExport = true }: FoodWebProps) {
     <div className="w-full h-full flex flex-col gap-4">
         <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2 items-center p-2 bg-neutral-dark/30 rounded-[var(--border-radius-apple)]">
             <Input placeholder="New Species Name..." value={newNodeLabel} onChange={(e) => setNewNodeLabel(e.target.value)} className="flex-grow" />
-            <Select value={newNodeGroup} onChange={(e) => setNewNodeGroup(e.target.value as FoodWebNode['group'])} className="h-10 w-full sm:w-auto">
-              <option value="producer">Producer</option>
-              <option value="primary">Primary Consumer</option>
-              <option value="secondary">Secondary Consumer</option>
-              <option value="tertiary">Tertiary Consumer</option>
-            </Select>
+            <CustomSelect 
+                value={newNodeGroup} 
+                onChange={(val) => setNewNodeGroup(val as FoodWebNode['group'])} 
+                options={nodeGroupOptions} 
+                className="w-full sm:w-auto"
+            />
             <Button onClick={addNode} className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4"/> Add Species</Button>
             {showExport && (
                 <Button onClick={() => openExportModal(containerRef, 'food-web')} variant="outline" className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4"/> Export</Button>

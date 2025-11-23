@@ -4,13 +4,13 @@ import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface MotionSegment {
   id: number;
@@ -30,6 +30,12 @@ const defaultSegments: MotionSegment[] = [
   { id: 1, type: 'accelerate', duration: 5, value: 2 },
   { id: 2, type: 'constant', duration: 10, value: 10 },
   { id: 3, type: 'decelerate', duration: 10, value: -1 },
+];
+
+const segmentTypeOptions = [
+    { value: 'accelerate', label: 'Accelerate' },
+    { value: 'constant', label: 'Constant Velocity' },
+    { value: 'decelerate', label: 'Decelerate' },
 ];
 
 function reducer(state: State, action: Action): State {
@@ -95,7 +101,11 @@ export default function MotionGraph({ initialSegments }: MotionGraphProps) {
             {segments.map((seg, index) => (
               <div key={seg.id} className="p-3 border border-neutral-dark/50 rounded-apple space-y-2">
                 <div className="flex justify-between items-center"><Label className="font-semibold">Segment {index + 1}</Label><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => dispatch({type: 'REMOVE_SEGMENT', payload: {id: seg.id}})}><Trash2 className="w-4 h-4 text-red-500" /></Button></div>
-                <Select value={seg.type} onChange={e => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'type', value: e.target.value}})}><option value="accelerate">Accelerate</option><option value="constant">Constant Velocity</option><option value="decelerate">Decelerate</option></Select>
+                <CustomSelect 
+                    value={seg.type} 
+                    onChange={val => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'type', value: val}})} 
+                    options={segmentTypeOptions}
+                />
                 <div className="flex gap-2"><Input type="number" value={seg.duration} onChange={e => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'duration', value: Number(e.target.value)}})} placeholder="Duration (s)" /><Input type="number" value={seg.value} onChange={e => dispatch({type: 'UPDATE_SEGMENT', payload: {id: seg.id, field: 'value', value: Number(e.target.value)}})} placeholder={seg.type === 'constant' ? 'Velocity (m/s)' : 'Accel (m/s²)'} /></div>
               </div>
             ))}

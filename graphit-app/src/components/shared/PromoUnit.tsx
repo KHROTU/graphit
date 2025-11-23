@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Card } from '../ui/Card';
 import { ArrowUpRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 const projects = [
   {
@@ -20,41 +21,59 @@ const projects = [
 ];
 
 const PromoUnit = () => {
+  const [project, setProject] = useState(projects[0]);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    setProject(projects[Math.floor(Math.random() * projects.length)]);
+  }, []);
+
+  const handleMouseEnter = () => {
+    videoRef.current?.play();
+  };
+
+  const handleMouseLeave = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
   return (
     <div className="mt-2 mb-4 pt-4 border-t border-neutral-dark/30 text-center">
       <p className="text-xs text-text/70 mb-3">
         If you found this tool useful, check out my other projects!
       </p>
       <div className="flex flex-col gap-3">
-        {projects.map((project) => (
-          <Link
-            key={project.name}
-            href={project.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group"
-          >
-            <Card className="!p-0 overflow-hidden text-left relative transition-all group-hover:border-accent">
-                <div className="aspect-video relative bg-neutral-dark/30">
-                    <video
-                        src={project.videoSrc}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-              <div className="p-3">
-                <h4 className="font-semibold text-sm flex items-center">
-                  {project.name}
-                  <ArrowUpRight className="ml-1 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </h4>
-                <p className="text-xs text-text/70">{project.description}</p>
-              </div>
-            </Card>
-          </Link>
-        ))}
+        <Link
+          key={project.name}
+          href={project.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <Card className="!p-0 overflow-hidden text-left relative transition-all group-hover:border-accent">
+            <div className="aspect-video relative bg-neutral-dark/30">
+              <video
+                ref={videoRef}
+                src={project.videoSrc}
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-3">
+              <h4 className="font-semibold text-sm flex items-center">
+                {project.name}
+                <ArrowUpRight className="ml-1 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </h4>
+              <p className="text-xs text-text/70">{project.description}</p>
+            </div>
+          </Card>
+        </Link>
       </div>
     </div>
   );

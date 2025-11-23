@@ -26,23 +26,21 @@ export const diagramRegistry: { [key: string]: React.LazyExoticComponent<Compone
   // ig maths
   'function-graph': lazy(() => import('./tools/FunctionGraph')),
   'statistical-chart': lazy(() => import('./tools/StatisticalChart')),
-  // alevel
-  'ad-as-diagram': lazy(() => import('./tools/SupplyDemandGraph')), // Placeholder
-  'enzyme-activity-graph': lazy(() => import('./tools/EnergyProfileDiagram')), // Placeholder
-  'decay-graph': lazy(() => import('./tools/RadioactiveDecayGraph')), // Placeholder
   // alevel econ
-  // feeling cute might die later
+  'ad-as-diagram': lazy(() => import('./tools/AdAsDiagram')),
   // alevel bio
   'enzyme-kinetics-graph': lazy(() => import('./tools/EnzymeKineticsGraph')),
   'oxygen-dissociation-curve': lazy(() => import('./tools/OxygenDissociationCurve')),
   'water-potential-calculator': lazy(() => import('./tools/WaterPotentialCalculator')),
   'microscopy-calculator': lazy(() => import('./tools/MicroscopyCalculator')),
+  'enzyme-activity-graph': lazy(() => import('./tools/EnzymeActivityGraph')),
   // alevel chem
   'periodic-trends-graph': lazy(() => import('./tools/PeriodicTrendsGraph')),
   'kinetics-graph': lazy(() => import('./tools/KineticsGraph')),
   'spectroscopy-tool': lazy(() => import('./tools/SpectroscopyTool')),
   // alevel physics
   'projectile-motion-graph': lazy(() => import('./tools/ProjectileMotionGraph')),
+  'decay-graph': lazy(() => import('./tools/RadioactiveDecayGraph')),
   // alevel maths
   'numerical-integration-graph': lazy(() => import('./tools/NumericalIntegrationGraph')),
   'linear-regression-graph': lazy(() => import('./tools/LinearRegressionGraph')),

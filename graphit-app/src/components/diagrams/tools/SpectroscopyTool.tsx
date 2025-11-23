@@ -3,13 +3,13 @@
 import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
-import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, LabelList } from 'recharts';
 import { useSession } from '@/lib/hooks/useSession';
 import SaveGraphButton from '@/components/shared/SaveGraphButton';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 type Tab = 'mass' | 'ir';
 type MassMolecule = 'ethanol' | 'propanone' | 'bromoethane';
@@ -30,6 +30,18 @@ function reducer(state: State, action: Action): State {
         default: return state;
     }
 }
+
+const massMoleculeOptions = [
+    { value: 'ethanol', label: 'Ethanol' },
+    { value: 'propanone', label: 'Propanone' },
+    { value: 'bromoethane', label: 'Bromoethane' }
+];
+
+const irMoleculeOptions = [
+    { value: 'alcohol', label: 'Alcohol (O-H)' },
+    { value: 'acid', label: 'Carboxylic Acid (C=O, O-H)' },
+    { value: 'ketone', label: 'Ketone (C=O)' }
+];
 
 const massSpecData = {
   ethanol: { M: 46, fragments: [{mz: 45, ab: 60}, {mz: 31, ab: 100}, {mz: 29, ab: 55}] },
@@ -136,9 +148,9 @@ export default function SpectroscopyTool(props: SpectroscopyProps) {
           </div>
           <div className="p-6 space-y-4">
             {activeTab === 'mass' ? (
-              <div><Label>Molecule</Label><Select value={massMolecule} onChange={e => dispatch({type: 'SET_MASS_MOLECULE', payload: e.target.value as MassMolecule})}><option value="ethanol">Ethanol</option><option value="propanone">Propanone</option><option value="bromoethane">Bromoethane</option></Select></div>
+              <div className="space-y-2"><Label>Molecule</Label><CustomSelect value={massMolecule} onChange={val => dispatch({type: 'SET_MASS_MOLECULE', payload: val as MassMolecule})} options={massMoleculeOptions}/></div>
             ) : (
-              <div><Label>Functional Group</Label><Select value={irMolecule} onChange={e => dispatch({type: 'SET_IR_MOLECULE', payload: e.target.value as IRMolecule})}><option value="alcohol">Alcohol (O-H)</option><option value="acid">Carboxylic Acid (C=O, O-H)</option><option value="ketone">Ketone (C=O)</option></Select></div>
+              <div className="space-y-2"><Label>Functional Group</Label><CustomSelect value={irMolecule} onChange={val => dispatch({type: 'SET_IR_MOLECULE', payload: val as IRMolecule})} options={irMoleculeOptions}/></div>
             )}
           </div>
           <div className="p-4 border-t border-neutral-dark/30 flex flex-col gap-2">
