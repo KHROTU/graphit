@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { Button } from '@/components/ui/Button';
 import { Download, X as CloseIcon, Loader2 } from 'lucide-react';
-import SteamSupportUnit from './SteamSupportUnit';
+import PromoUnit from './PromoUnit';
 import { toPng } from 'html-to-image';
 
 export default function ExportModal() {
@@ -56,7 +56,7 @@ export default function ExportModal() {
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} className="bg-neutral/95 backdrop-blur-sm rounded-[var(--border-radius-apple)] w-full max-w-sm flex flex-col gap-4 p-6 shadow-xl" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <div className="flex justify-between items-center"><h3 className="text-lg font-semibold">Export Diagram</h3><Button variant="ghost" size="icon" className="h-8 w-8" onClick={closeExportModal}><CloseIcon className="h-4 w-4"/></Button></div>
             
-            <SteamSupportUnit />
+            <PromoUnit />
             
             <Button onClick={handleDownload} className="w-full" disabled={isExporting}>
               {isExporting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Download className="mr-2 h-4 w-4" /> Download as PNG</>}
