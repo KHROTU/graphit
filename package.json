@@ -4,5 +4,8 @@
   },
   "scripts": {
     "generate-previews": "node generate-previews.mjs"
+  },
+  "dependencies": {
+    "next": "^15.5.7"
   }
 }
