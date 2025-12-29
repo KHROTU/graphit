@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.BACKEND_URL;
+
 export async function POST(request: Request) {
     const body = await request.json();
-    const backendUrl = 'https://graphit.pythonanywhere.com/signup';
+    
+    if (!BACKEND_URL) {
+        console.error("BACKEND_URL environment variable is not set.");
+        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
     
     try {
-        const backendResponse = await fetch(backendUrl, {
+        const backendResponse = await fetch(`${BACKEND_URL}/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),

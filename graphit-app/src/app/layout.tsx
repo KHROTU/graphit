@@ -11,6 +11,7 @@ import { getAllDiagrams } from "@/lib/content";
 import { SessionProvider } from "@/lib/context/SessionContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import AnalyticsSync from "@/components/shared/AnalyticsSync";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -69,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </ThemeProvider>
         <SpeedInsights />
         <Analytics />
+        <AnalyticsSync />
       </body>
     </html>
   );
