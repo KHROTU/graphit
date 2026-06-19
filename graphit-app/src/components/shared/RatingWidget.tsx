@@ -1,10 +1,8 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-
 // A simple interface for our analytics data structure
 interface AnalyticsData {
   [diagramId: string]: {
@@ -12,13 +10,11 @@ interface AnalyticsData {
     ratings?: number[];
   };
 }
-
 export default function RatingWidget({ diagramId }: { diagramId: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentRating, setCurrentRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-
   // Check localStorage on mount to see if user has already rated this diagram
   useEffect(() => {
     const data = localStorage.getItem('graphit-analytics');
@@ -29,31 +25,25 @@ export default function RatingWidget({ diagramId }: { diagramId: string }) {
       }
     }
   }, [diagramId]);
-  
   const handleSubmitRating = () => {
     if (currentRating === 0) return;
-
     try {
         const rawData = localStorage.getItem('graphit-analytics') || '{}';
         const allData: AnalyticsData = JSON.parse(rawData);
-
         if (!allData[diagramId]) {
         allData[diagramId] = {};
         }
         if (!allData[diagramId].ratings) {
             allData[diagramId].ratings = [];
         }
-
         allData[diagramId].ratings!.push(currentRating);
         localStorage.setItem('graphit-analytics', JSON.stringify(allData));
-        
         setHasSubmitted(true);
         setTimeout(() => setIsOpen(false), 1500); // Close modal after a short delay
     } catch (error) {
         console.error("Failed to save rating:", error);
     }
   };
-
   return (
     <>
       <div className="fixed bottom-6 right-6 z-40">
@@ -62,7 +52,6 @@ export default function RatingWidget({ diagramId }: { diagramId: string }) {
           <span className="ml-2 hidden sm:inline">Rate this Tool</span>
         </Button>
       </div>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -79,7 +68,6 @@ export default function RatingWidget({ diagramId }: { diagramId: string }) {
                 <h3 className="text-lg font-semibold">{hasSubmitted ? 'Thank You!' : 'Rate this Diagram'}</h3>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}><X className="h-4 w-4"/></Button>
               </div>
-              
               {hasSubmitted ? (
                 <p className="text-center text-text/80 py-8">Your feedback helps us improve!</p>
               ) : (

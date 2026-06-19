@@ -1,19 +1,15 @@
 'use client';
-
 import React from 'react';
 import { Button } from '@/components/ui/Button';
-
 interface SegmentOption<T extends string> {
   value: T;
   label: string;
 }
-
 interface SegmentControlProps<T extends string> {
   options: SegmentOption<T>[];
   value: T;
   onValueChange: (value: T) => void;
 }
-
 export function SegmentControl<T extends string>({ options, value, onValueChange }: SegmentControlProps<T>) {
   return (
     <div className="flex gap-2">

@@ -1,10 +1,8 @@
 'use client';
-
 import Link from 'next/link';
 import { Card } from '../ui/Card';
 import { ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-
 const projects = [
   {
     name: 'Sat DB',
@@ -19,26 +17,21 @@ const projects = [
     videoSrc: '/notllm.webm',
   },
 ];
-
 const PromoUnit = () => {
   const [project, setProject] = useState(projects[0]);
   const videoRef = useRef<HTMLVideoElement>(null);
-
   useEffect(() => {
     setProject(projects[Math.floor(Math.random() * projects.length)]);
   }, []);
-
   const handleMouseEnter = () => {
     videoRef.current?.play();
   };
-
   const handleMouseLeave = () => {
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
   };
-
   return (
     <div className="mt-2 mb-4 pt-4 border-t border-neutral-dark/30 text-center">
       <p className="text-xs text-text/70 mb-3">
@@ -78,5 +71,4 @@ const PromoUnit = () => {
     </div>
   );
 };
-
 export default PromoUnit;

@@ -1,9 +1,7 @@
 'use client';
-
 import React from 'react';
 import { Label } from '@/components/ui/Label';
 import { CustomSelect } from '@/components/ui/CustomSelect';
-
 interface SelectControlProps<T extends string> {
   label: string;
   value: T;
@@ -12,7 +10,6 @@ interface SelectControlProps<T extends string> {
   helpText?: string;
   className?: string;
 }
-
 export function SelectControl<T extends string>({ label, value, onValueChange, options, helpText, className }: SelectControlProps<T>) {
   return (
     <div className={className}>

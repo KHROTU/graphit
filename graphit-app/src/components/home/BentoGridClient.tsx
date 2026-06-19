@@ -1,16 +1,13 @@
 'use client';
-
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { ArrowRight, Book, FlaskConical, Atom, Dna, BarChart3, Waves } from 'lucide-react';
-
 interface Diagram {
   name: string;
   subject: string;
   href: string;
 }
-
 const subjectIcons: { [key: string]: React.ElementType } = {
   physics: Atom,
   biology: Dna,
@@ -20,7 +17,6 @@ const subjectIcons: { [key: string]: React.ElementType } = {
   mathematics: BarChart3,
   default: Book,
 };
-
 const BentoCard = ({ diagram, className }: { diagram: Diagram, className?: string }) => {
   const Icon = subjectIcons[diagram.subject] || subjectIcons.default;
   return (
@@ -43,12 +39,10 @@ const BentoCard = ({ diagram, className }: { diagram: Diagram, className?: strin
     </Link>
   );
 };
-
 export default function BentoGridClient({ diagrams }: { diagrams: Diagram[] }) {
   if (!diagrams || diagrams.length < 5) {
     return <p className="text-center text-text/50">Could not load featured tools.</p>;
   }
-
   return (
     <motion.div
       initial="hidden"

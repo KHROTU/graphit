@@ -1,50 +1,41 @@
 'use client';
-
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { SessionData } from '@/lib/session';
-
-interface SessionContextType {
-  session: SessionData | null;
-  isLoading: boolean;
-  refetchSession: () => Promise<void>;
+export interface LocalUserData {
+  username: string;
 }
-
+interface SessionContextType {
+  user: LocalUserData | null;
+  isLoading: boolean;
+  setUsername: (name: string) => void;
+  clearUser: () => void;
+}
 export const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
+const USER_KEY = 'graphit-user';
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<SessionData | null>(null);
+  const [user, setUser] = useState<LocalUserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const fetchSession = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/session');
-      if (res.ok) {
-        const data = await res.json();
-        setSession(data);
-      } else {
-        setSession({ isLoggedIn: false });
-      }
-    } catch (error) {
-      console.error('Failed to fetch session:', error);
-      setSession({ isLoggedIn: false });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchSession();
-  }, [fetchSession]);
-
-  const value = {
-    session,
-    isLoading,
-    refetchSession: fetchSession,
-  };
-
+    try {
+      const stored = localStorage.getItem(USER_KEY);
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+    } catch {
+      // ignore parse errors
+    }
+    setIsLoading(false);
+  }, []);
+  const setUsername = useCallback((name: string) => {
+    const data: LocalUserData = { username: name };
+    localStorage.setItem(USER_KEY, JSON.stringify(data));
+    setUser(data);
+  }, []);
+  const clearUser = useCallback(() => {
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+  }, []);
   return (
-    <SessionContext.Provider value={value}>
+    <SessionContext.Provider value={{ user, isLoading, setUsername, clearUser }}>
       {children}
     </SessionContext.Provider>
   );

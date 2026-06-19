@@ -1,15 +1,12 @@
 'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface Option {
   value: string;
   label: string;
 }
-
 interface CustomSelectProps {
   value: string;
   onChange: (value: string) => void;
@@ -18,13 +15,10 @@ interface CustomSelectProps {
   placeholder?: string;
   disabled?: boolean;
 }
-
 export function CustomSelect({ value, onChange, options, className, placeholder = "Select...", disabled = false }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder;
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -34,12 +28,10 @@ export function CustomSelect({ value, onChange, options, className, placeholder 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
     setIsOpen(false);
   };
-
   return (
     <div className={cn("relative w-full", className)} ref={containerRef}>
       <button
@@ -54,7 +46,6 @@ export function CustomSelect({ value, onChange, options, className, placeholder 
         <span className="truncate">{selectedLabel}</span>
         <ChevronDown className={cn("h-4 w-4 opacity-50 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div

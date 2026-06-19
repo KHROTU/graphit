@@ -51,6 +51,67 @@
                 "previewImage": "/previews/cost-revenue-graph.png"
               }
             ]
+          },
+          {
+            "topicId": "externalities",
+            "topicName": "Externalities & Government Intervention",
+            "diagrams": [
+              {
+                "diagramId": "externalities-graph",
+                "description": "Model positive and negative externalities with Pigouvian taxes and subsidies.",
+                "previewImage": "/previews/externalities-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "price-controls",
+            "topicName": "Price Controls",
+            "diagrams": [
+              {
+                "diagramId": "price-controls-graph",
+                "description": "Visualize price ceilings, price floors, and their market effects.",
+                "previewImage": "/previews/price-controls-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "tax-subsidy",
+            "topicName": "Taxation & Subsidies",
+            "diagrams": [
+              {
+                "diagramId": "tax-subsidy-graph",
+                "description": "Analyze the incidence of indirect taxes and subsidies on consumers and producers.",
+                "previewImage": "/previews/tax-subsidy-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "elasticity",
+            "topicName": "Price Elasticity",
+            "diagrams": [
+              {
+                "diagramId": "elasticity-graph",
+                "description": "Compare PED, PES, YED, and XED with adjustable elasticity values.",
+                "previewImage": "/previews/elasticity-graph.png"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "subjectId": "business",
+        "subjectName": "Business Studies (0450)",
+        "topics": [
+          {
+            "topicId": "break-even",
+            "topicName": "Break-Even Analysis",
+            "diagrams": [
+              {
+                "diagramId": "break-even-graph",
+                "description": "Calculate break-even point, margin of safety, and profit/loss areas.",
+                "previewImage": "/previews/break-even-graph.png"
+              }
+            ]
           }
         ]
       },
@@ -77,6 +138,39 @@
                 "diagramId": "climate-graph",
                 "description": "Compare temperature and precipitation data for different biomes.",
                 "previewImage": "/previews/climate-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "rivers",
+            "topicName": "Storm Hydrographs",
+            "diagrams": [
+              {
+                "diagramId": "storm-hydrograph",
+                "description": "Analyze river discharge during a storm event with peak flow and lag time.",
+                "previewImage": "/previews/storm-hydrograph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "demography",
+            "topicName": "Demographic Transition Model",
+            "diagrams": [
+              {
+                "diagramId": "demographic-transition-model",
+                "description": "Explore the five stages of demographic change with birth rates, death rates, and total population.",
+                "previewImage": "/previews/demographic-transition-model.png"
+              }
+            ]
+          },
+          {
+            "topicId": "river-profiles",
+            "topicName": "River Profiles",
+            "diagrams": [
+              {
+                "diagramId": "river-profile-graph",
+                "description": "Visualize the long profile and cross-section of rivers from source to mouth.",
+                "previewImage": "/previews/river-profile-graph.png"
               }
             ]
           }
@@ -116,6 +210,39 @@
                 "diagramId": "ecology-diagrams",
                 "description": "Model food webs and pyramids of numbers and biomass.",
                 "previewImage": "/previews/ecology-diagrams.png"
+              }
+            ]
+          },
+          {
+            "topicId": "photosynthesis",
+            "topicName": "Photosynthesis Rate",
+            "diagrams": [
+              {
+                "diagramId": "photosynthesis-graph",
+                "description": "Model the rate of photosynthesis with light intensity, CO₂, and temperature as limiting factors.",
+                "previewImage": "/previews/photosynthesis-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "population-growth",
+            "topicName": "Population Growth",
+            "diagrams": [
+              {
+                "diagramId": "population-growth-graph",
+                "description": "Explore sigmoid growth curves with lag, log, and stationary phases toward carrying capacity.",
+                "previewImage": "/previews/population-growth-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "transpiration",
+            "topicName": "Transpiration Rate",
+            "diagrams": [
+              {
+                "diagramId": "transpiration-graph",
+                "description": "Investigate how humidity, temperature, wind, and light affect transpiration rate.",
+                "previewImage": "/previews/transpiration-graph.png"
               }
             ]
           }
@@ -168,6 +295,17 @@
                 "previewImage": "/previews/reaction-rate-graph.png"
               }
             ]
+          },
+          {
+            "topicId": "solutions",
+            "topicName": "Solubility Curves",
+            "diagrams": [
+              {
+                "diagramId": "solubility-curve",
+                "description": "Plot solubility vs temperature for multiple salts and gases.",
+                "previewImage": "/previews/solubility-curve.png"
+              }
+            ]
           }
         ]
       },
@@ -218,6 +356,39 @@
                 "previewImage": "/previews/doppler-effect-sound.png"
               }
             ]
+          },
+          {
+            "topicId": "electricity-iv",
+            "topicName": "I-V Characteristics",
+            "diagrams": [
+              {
+                "diagramId": "iv-characteristics-graph",
+                "description": "Plot current-voltage graphs for ohmic conductors, filament lamps, and diodes.",
+                "previewImage": "/previews/iv-characteristics-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "thermal",
+            "topicName": "Heating & Cooling Curves",
+            "diagrams": [
+              {
+                "diagramId": "heating-cooling-curve",
+                "description": "Model phase changes with heating and cooling curves including latent heat.",
+                "previewImage": "/previews/heating-cooling-curve.png"
+              }
+            ]
+          },
+          {
+            "topicId": "wave-properties",
+            "topicName": "Wave Graphs",
+            "diagrams": [
+              {
+                "diagramId": "wave-graph",
+                "description": "Create displacement-time and displacement-distance wave diagrams.",
+                "previewImage": "/previews/wave-graph.png"
+              }
+            ]
           }
         ]
       },
@@ -244,6 +415,54 @@
                 "diagramId": "statistical-chart",
                 "description": "Create bar charts, pie charts, and histograms from data.",
                 "previewImage": "/previews/statistical-chart.png"
+              },
+              {
+                "diagramId": "histogram-tool",
+                "description": "Build histograms with adjustable bin widths and frequency density.",
+                "previewImage": "/previews/histogram-tool.png"
+              },
+              {
+                "diagramId": "box-plot-tool",
+                "description": "Create box-and-whisker plots with adjustable quartiles and outlier detection.",
+                "previewImage": "/previews/box-plot-tool.png"
+              },
+              {
+                "diagramId": "cumulative-frequency-tool",
+                "description": "Plot cumulative frequency curves (ogives) with median and quartile extraction.",
+                "previewImage": "/previews/cumulative-frequency-tool.png"
+              }
+            ]
+          },
+          {
+            "topicId": "trigonometry",
+            "topicName": "Trigonometric Graphs",
+            "diagrams": [
+              {
+                "diagramId": "trigonometric-graph",
+                "description": "Explore sin, cos, and tan graphs with amplitude, period, and phase shift controls.",
+                "previewImage": "/previews/trigonometric-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "transformations",
+            "topicName": "Graph Transformations",
+            "diagrams": [
+              {
+                "diagramId": "transformation-graph",
+                "description": "Apply translations, stretches, and reflections to function graphs.",
+                "previewImage": "/previews/transformation-graph.png"
+              }
+            ]
+          },
+          {
+            "topicId": "exponential-log",
+            "topicName": "Exponential & Logarithmic Graphs",
+            "diagrams": [
+              {
+                "diagramId": "exponential-log-graph",
+                "description": "Plot exponential growth/decay and logarithmic functions with asymptotes.",
+                "previewImage": "/previews/exponential-log-graph.png"
               }
             ]
           }
@@ -271,6 +490,18 @@
                 "previewImage": "/previews/ad-as-diagram.png"
               }
             ]
+          },
+          {
+            "topicId": "phillips-curve",
+            "topicName": "Phillips Curve",
+            "diagrams": [
+              {
+                "diagramId": "phillips-curve-graph",
+                "levelTag": "A-Level",
+                "description": "Explore the short-run and long-run relationship between inflation and unemployment.",
+                "previewImage": "/previews/phillips-curve-graph.png"
+              }
+            ]
           }
         ]
       },
@@ -287,6 +518,12 @@
                 "levelTag": "AS",
                 "description": "Investigate factors affecting the rate of enzyme activity.",
                 "previewImage": "/previews/enzyme-kinetics-graph.png"
+              },
+              {
+                "diagramId": "enzyme-activity-graph",
+                "levelTag": "AS",
+                "description": "Explore how temperature, pH, and substrate concentration affect enzyme activity.",
+                "previewImage": "/previews/enzyme-activity-graph.png"
               }
             ]
           },
@@ -401,6 +638,30 @@
                 "levelTag": "A-Level",
                 "description": "Analyse Infrared (IR) and Mass Spectrometry data.",
                 "previewImage": "/previews/spectroscopy-tool.png"
+              }
+            ]
+          },
+          {
+            "topicId": "born-haber",
+            "topicName": "Born-Haber Cycle",
+            "diagrams": [
+              {
+                "diagramId": "born-haber-cycle",
+                "levelTag": "A-Level",
+                "description": "Construct Born-Haber cycle diagrams to calculate lattice enthalpy.",
+                "previewImage": "/previews/born-haber-cycle.png"
+              }
+            ]
+          },
+          {
+            "topicId": "buffer-titration",
+            "topicName": "Buffer & Titration Curves",
+            "diagrams": [
+              {
+                "diagramId": "buffer-titration-graph",
+                "levelTag": "A-Level",
+                "description": "Explore extended titration curves with buffer region visualization and pKa.",
+                "previewImage": "/previews/buffer-titration-graph.png"
               }
             ]
           }

@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Network } from 'vis-network';
 import { DataSet } from 'vis-data';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Plus, Download, Link2, Trash2, MousePointer } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
-
 interface FoodWebNode extends Node { id: string; label: string; group: 'producer' | 'primary' | 'secondary' | 'tertiary'; }
 const initialNodesData: FoodWebNode[] = [
   { id: '1', label: "Grass", group: "producer" }, { id: '2', label: "Rabbit", group: "primary" },
@@ -19,18 +17,14 @@ const initialNodesData: FoodWebNode[] = [
 const initialEdgesData: Edge[] = [
   { from: '1', to: '2', arrows: "to" }, { from: '1', to: '4', arrows: "to" }, { from: '2', to: '3', arrows: "to" },
 ];
-
 type ToolbarMode = 'navigate' | 'addEdge' | 'delete';
-
 interface ClickParams {
   nodes: IdType[];
   edges: IdType[];
 }
-
 interface FoodWebProps {
     showExport?: boolean;
 }
-
 const Toolbar = ({ onModeChange, activeMode }: {
   onModeChange: (mode: ToolbarMode) => void;
   activeMode: string;
@@ -50,39 +44,32 @@ const Toolbar = ({ onModeChange, activeMode }: {
     </div>
   );
 };
-
 export default function FoodWeb({ showExport = true }: FoodWebProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
   const { resolvedTheme } = useTheme();
   const { openExportModal } = useExportModal();
-
   const [data] = useState({
     nodes: new DataSet<FoodWebNode>(initialNodesData),
     edges: new DataSet<Edge>(initialEdgesData),
   });
-  
   const [newNodeLabel, setNewNodeLabel] = useState('');
   const [newNodeGroup, setNewNodeGroup] = useState<FoodWebNode['group']>('primary');
   const [activeMode, setActiveMode] = useState<ToolbarMode>('navigate');
-
   const nodeGroupOptions = [
     { value: 'producer', label: 'Producer' },
     { value: 'primary', label: 'Primary Consumer' },
     { value: 'secondary', label: 'Secondary Consumer' },
     { value: 'tertiary', label: 'Tertiary Consumer' },
   ];
-
   const addNode = useCallback(() => {
     if (!newNodeLabel.trim()) return;
     const newId = new Date().getTime().toString();
     data.nodes.add({ id: newId, label: newNodeLabel, group: newNodeGroup });
     setNewNodeLabel('');
   }, [data.nodes, newNodeLabel, newNodeGroup]);
-  
   useEffect(() => {
     if (!containerRef.current) return;
-
     const options: Options = {
         nodes: { 
             shape: 'dot', 
@@ -112,27 +99,22 @@ export default function FoodWeb({ showExport = true }: FoodWebProps) {
         },
         manipulation: { enabled: false },
     };
-
     const network = new Network(containerRef.current, data, options);
     networkRef.current = network;
     return () => network.destroy();
   }, [data, resolvedTheme]);
-
   useEffect(() => {
     const network = networkRef.current;
     if (!network) return;
-
     const handleDeleteClick = (params: ClickParams) => {
         if (params && params.nodes && params.nodes.length > 0) data.nodes.remove(params.nodes);
         if (params && params.edges && params.edges.length > 0) data.edges.remove(params.edges);
     };
-    
     network.off('click', handleDeleteClick);
     network.disableEditMode();
     if(containerRef.current) {
         containerRef.current.style.cursor = 'default';
     }
-
     if (activeMode === 'addEdge') {
         if(containerRef.current) containerRef.current.style.cursor = 'cell';
         network.addEdgeMode();
@@ -141,14 +123,12 @@ export default function FoodWeb({ showExport = true }: FoodWebProps) {
         network.on('click', handleDeleteClick);
     }
   }, [activeMode, data.nodes, data.edges]);
-
   useEffect(() => {
     if(networkRef.current) {
         const fontColor = resolvedTheme === 'dark' ? '#E8ECEF' : '#2F4F4F';
         networkRef.current.setOptions({ nodes: { font: { color: fontColor } } });
     }
   }, [resolvedTheme]);
-
   return (
     <div className="w-full h-full flex flex-col gap-4">
         <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2 items-center p-2 bg-neutral-dark/30 rounded-[var(--border-radius-apple)]">

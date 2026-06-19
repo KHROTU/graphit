@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 @theme {
   --color-background: #FFF8E1;
   --color-text: #2F4F4F;
@@ -15,25 +14,21 @@
   --border-radius-apple: 1.25rem;
   --animation-fadeIn: fadeIn 0.5s ease-in-out;
   --animation-glitter: glitter 2s linear infinite;
-
   --keyframes-fadeIn: {
     '0%': { opacity: 0, transform: translateY(10px) },
     '100%': { opacity: 1, transform: translateY(0) },
   };
-
   --keyframes-glitter: {
     '0%': { 'background-position': '0% 50%' },
     '50%': { 'background-position': '100% 50%' },
     '100%': { 'background-position': '0% 50%' },
   };
 }
-
 @layer base {
   body {
     @apply bg-background text-text font-sans;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
-  
   .dark {
     --color-background: #1a1a1a;
     --color-text: #E8ECEF;
@@ -45,12 +40,10 @@
     --color-neutral-dark: #3a3a3a;
     --color-text-inverted: #1a1a1a;
   }
-
   .squircle {
     clip-path: inset(0% 0% 0% 0% round 30%);
   }
 }
-
 @layer utilities {
   .text-glitter {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-500 to-indigo-500 dark:from-pink-300 dark:via-purple-400 dark:to-indigo-400 font-bold;

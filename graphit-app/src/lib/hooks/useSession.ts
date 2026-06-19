@@ -1,8 +1,6 @@
 'use client';
-
 import { useContext } from 'react';
 import { SessionContext } from '@/lib/context/SessionContext';
-
 export function useSession() {
   const context = useContext(SessionContext);
   if (context === undefined) {

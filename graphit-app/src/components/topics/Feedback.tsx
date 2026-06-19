@@ -1,13 +1,10 @@
 'use client';
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-
 export default function Feedback() {
   const [isOpen, setIsOpen] = useState(false);
-
   return (
     <>
       <div className="fixed bottom-6 right-6 z-40">
@@ -20,7 +17,6 @@ export default function Feedback() {
           <MessageSquare className="h-6 w-6" />
         </Button>
       </div>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Button } from '../ui/Button';
-
 const HeroSection = () => {
   return (
     <section className="text-center py-20 md:py-32">
@@ -23,5 +22,4 @@ const HeroSection = () => {
     </section>
   );
 };
-
 export default HeroSection;

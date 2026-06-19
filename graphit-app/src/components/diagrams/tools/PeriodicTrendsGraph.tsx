@@ -1,28 +1,22 @@
 'use client';
-
 import React, { useReducer, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Label } from '@/components/ui/Label';
-import { Save } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { useSession } from '@/lib/hooks/useSession';
-import SaveGraphButton from '@/components/shared/SaveGraphButton';
-
+import { SegmentControl } from '../controls/SegmentControl';
+import { SelectControl } from '../controls/SelectControl';
+import { DiagramToolbar } from '../DiagramToolbar';
+import { DiagramErrorBoundary } from '../DiagramErrorBoundary';
 type Trend = 'ionisation' | 'radius' | 'electronegativity';
 type Period = '1' | '2' | '3' | '4' | '5' | '6';
-
 interface PeriodicTrendsProps {
   initialSelectedTrend?: Trend;
   initialSelectedPeriod?: Period;
 }
-
 type State = { selectedTrend: Trend; selectedPeriod: Period; };
 type Action = 
     | { type: 'SET_TREND', payload: Trend }
     | { type: 'SET_PERIOD', payload: Period };
-
 function reducer(state: State, action: Action): State {
     switch(action.type) {
         case 'SET_TREND': return { ...state, selectedTrend: action.payload };
@@ -30,7 +24,6 @@ function reducer(state: State, action: Action): State {
         default: return state;
     }
 }
-
 const periodicData = {
   '1': { elements: ['H', 'He'], ionisation: [1312, 2372], radius: [53, 31], electronegativity: [2.20, null] },
   '2': { elements: ['Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne'], ionisation: [520, 900, 801, 1087, 1402, 1314, 1681, 2081], radius: [167, 112, 87, 67, 56, 48, 42, 38], electronegativity: [0.98, 1.57, 2.04, 2.55, 3.04, 3.44, 3.98, null] },
@@ -44,8 +37,25 @@ const trendInfo = {
   radius: { label: 'Atomic Radius', unit: 'pm' },
   electronegativity: { label: 'Electronegativity', unit: '(Pauling)' },
 };
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57'];
-
+const PERIODIC_COLORS = [
+  'var(--chart-1, #0088FE)',
+  'var(--chart-2, #00C49F)',
+  'var(--chart-3, #FFBB28)',
+  'var(--chart-4, #FF8042)',
+  'var(--chart-5, #8884d8)',
+  'var(--chart-6, #82ca9d)',
+  'var(--chart-7, #ffc658)',
+  'var(--chart-8, #d0ed57)',
+];
+const trendOptions: { value: Trend; label: string }[] = [
+  { value: 'ionisation', label: 'Ionisation Energy' },
+  { value: 'radius', label: 'Atomic Radius' },
+  { value: 'electronegativity', label: 'Electronegativity' },
+];
+const periodOptions: { value: Period; label: string }[] = (Object.keys(periodicData) as Period[]).map(p => ({
+  value: p,
+  label: `Period ${p}`,
+}));
 export default function PeriodicTrendsGraph(props: PeriodicTrendsProps) {
   const initialState: State = {
       selectedTrend: props.initialSelectedTrend || 'ionisation',
@@ -53,11 +63,8 @@ export default function PeriodicTrendsGraph(props: PeriodicTrendsProps) {
   };
   const [state, dispatch] = useReducer(reducer, initialState);
   const { selectedTrend, selectedPeriod } = state;
-
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
-  const { session } = useSession();
-
   const chartData = useMemo(() => {
     const dataForPeriod = periodicData[selectedPeriod];
     return dataForPeriod.elements.map((element, i) => ({
@@ -65,64 +72,61 @@ export default function PeriodicTrendsGraph(props: PeriodicTrendsProps) {
       value: (dataForPeriod[selectedTrend] as (number | null)[])[i],
     }));
   }, [selectedTrend, selectedPeriod]);
-
   const getDiagramState = () => ({
     initialSelectedTrend: selectedTrend,
     initialSelectedPeriod: selectedPeriod,
   });
-
+  const handleReset = () => {
+    dispatch({ type: 'SET_TREND', payload: initialState.selectedTrend });
+    dispatch({ type: 'SET_PERIOD', payload: initialState.selectedPeriod });
+  };
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div className="md:col-span-1">
-        <Card>
-          <CardHeader><CardTitle>Periodic Trends Grapher</CardTitle></CardHeader>
-          <div className="p-6 space-y-6">
-            <div>
-              <Label>Select Trend</Label>
-              <div className="flex flex-col gap-2 mt-2">
-                <Button variant={selectedTrend === 'ionisation' ? 'default' : 'outline'} onClick={() => dispatch({type: 'SET_TREND', payload: 'ionisation'})}>Ionisation Energy</Button>
-                <Button variant={selectedTrend === 'radius' ? 'default' : 'outline'} onClick={() => dispatch({type: 'SET_TREND', payload: 'radius'})}>Atomic Radius</Button>
-                <Button variant={selectedTrend === 'electronegativity' ? 'default' : 'outline'} onClick={() => dispatch({type: 'SET_TREND', payload: 'electronegativity'})}>Electronegativity</Button>
+    <DiagramErrorBoundary diagramName="Periodic Trends Grapher">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader><CardTitle>Periodic Trends Grapher</CardTitle></CardHeader>
+            <div className="p-6 space-y-6">
+              <div>
+                <SegmentControl
+                  value={selectedTrend}
+                  onValueChange={(val) => dispatch({type: 'SET_TREND', payload: val})}
+                  options={trendOptions}
+                />
               </div>
+              <SelectControl
+                label="Select Period"
+                value={selectedPeriod}
+                onValueChange={(val) => dispatch({type: 'SET_PERIOD', payload: val})}
+                options={periodOptions}
+                helpText="(Note: Transition metals are excluded for clarity)"
+              />
+              <DiagramToolbar
+                diagramName="Periodic Trends Grapher"
+                getDiagramState={getDiagramState}
+                onExport={() => openExportModal(diagramContainerRef, 'periodic-trends-graph')}
+                onReset={handleReset}
+              />
             </div>
-            
-            <div>
-              <Label>Select Period</Label>
-              <p className="text-xs text-text/60 mb-2">(Note: Transition metals are excluded for clarity)</p>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {(Object.keys(periodicData) as Period[]).map(p => (
-                  <Button key={p} variant={selectedPeriod === p ? 'default' : 'outline'} onClick={() => dispatch({type: 'SET_PERIOD', payload: p})}>{`Period ${p}`}</Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-4 border-t border-neutral-dark/30">
-              <Button onClick={() => openExportModal(diagramContainerRef, 'periodic-trends-graph')}>
-                  <Save className="mr-2 h-4 w-4" /> Save & Export Image
-              </Button>
-              {session?.isLoggedIn && (
-                <SaveGraphButton diagramName="Periodic Trends Grapher" getDiagramState={getDiagramState} />
-              )}
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
+        <div className="md:col-span-2 min-h-[500px]">
+          <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
+                  <XAxis dataKey="name" stroke="var(--color-text)" label={{ value: 'Element', position: 'insideBottom', offset: -10, fill: 'var(--color-text)' }}/>
+                  <YAxis stroke="var(--color-text)" label={{ value: trendInfo[selectedTrend].unit, angle: -90, position: 'insideLeft', fill: 'var(--color-text)' }} domain={['dataMin - 5', 'auto']} />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-neutral)', border: '1px solid var(--color-neutral-dark)', borderRadius: 'var(--border-radius-apple)' }}/>
+                  <Legend verticalAlign="top" wrapperStyle={{ color: 'var(--color-text)' }} />
+                  <Bar dataKey="value" name={trendInfo[selectedTrend].label}>
+                      {chartData.map((_entry, index) => (<Cell key={`cell-${index}`} fill={PERIODIC_COLORS[index % PERIODIC_COLORS.length]} />))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+          </Card>
+        </div>
       </div>
-      <div className="md:col-span-2 min-h-[500px]">
-        <Card className="h-full !p-4" ref={diagramContainerRef} data-testid="diagram-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
-                <XAxis dataKey="name" label={{ value: 'Element', position: 'insideBottom', offset: -10 }}/>
-                <YAxis label={{ value: trendInfo[selectedTrend].unit, angle: -90, position: 'insideLeft' }} domain={['dataMin - 5', 'auto']} />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--color-neutral)', border: '1px solid var(--color-neutral-dark)', borderRadius: 'var(--border-radius-apple)' }}/>
-                <Legend verticalAlign="top" />
-                <Bar dataKey="value" name={trendInfo[selectedTrend].label}>
-                    {chartData.map((_entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-        </Card>
-      </div>
-    </div>
+    </DiagramErrorBoundary>
   );
 }

@@ -1,16 +1,13 @@
 'use client';
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Level, Topic } from '@/lib/content'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Book, FlaskConical, Atom, Dna, ChevronsRight, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
-
 interface TopicNavigatorProps {
   initialData: Level[];
 }
-
 const subjectIcons: { [key: string]: React.ElementType } = {
   physics: Atom,
   biology: Dna,
@@ -20,7 +17,6 @@ const subjectIcons: { [key: string]: React.ElementType } = {
   mathematics: ChevronsRight,
   default: Book,
 };
-
 const Column = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
@@ -33,7 +29,6 @@ const Column = ({ title, children }: { title: string; children: React.ReactNode 
     {children}
   </motion.div>
 );
-
 const ListItem = ({
   id,
   onClick,
@@ -56,7 +51,6 @@ const ListItem = ({
     </button>
   </li>
 );
-
 const ColumnSearch = ({ value, onChange, placeholder }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; placeholder: string; }) => (
   <div className="relative mb-4 px-1">
     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text/40" />
@@ -77,32 +71,26 @@ const ColumnSearch = ({ value, onChange, placeholder }: { value: string; onChang
       )}
   </div>
 );
-
-
 export default function TopicNavigator({ initialData }: TopicNavigatorProps) {
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [subjectFilter, setSubjectFilter] = useState('');
   const [topicFilter, setTopicFilter] = useState('');
-
   useEffect(() => {
     const hash = window.location.hash.substring(1);
     if (!hash) return;
-    
     const directLevelMatch = initialData.find(level => level.levelId === hash);
     if (directLevelMatch) {
       setSelectedLevelId(directLevelMatch.levelId);
       setSelectedSubjectId(null);
       return;
     }
-
     for (const level of initialData) {
         const prefix = `${level.levelId}-`;
         if (hash.startsWith(prefix)) {
             const levelId = level.levelId;
             const subjectId = hash.substring(prefix.length);
             const levelMatch = initialData.find(l => l.levelId === levelId);
-
             if (levelMatch && levelMatch.subjects.some(sub => sub.subjectId === subjectId)) {
                 setSelectedLevelId(levelId);
                 setSelectedSubjectId(subjectId);
@@ -111,50 +99,42 @@ export default function TopicNavigator({ initialData }: TopicNavigatorProps) {
         }
     }
   }, [initialData]);
-
   const selectedLevel = useMemo(
     () => initialData.find((level) => level.levelId === selectedLevelId),
     [selectedLevelId, initialData]
   );
-
   const filteredSubjects = useMemo(() => {
     if (!selectedLevel) return [];
     return selectedLevel.subjects.filter(subject =>
       subject.subjectName.toLowerCase().includes(subjectFilter.toLowerCase())
     );
   }, [selectedLevel, subjectFilter]);
-
   const selectedSubject = useMemo(
     () => selectedLevel?.subjects.find((sub) => sub.subjectId === selectedSubjectId),
     [selectedSubjectId, selectedLevel]
   );
-
   const filteredTopics = useMemo(() => {
     if (!selectedSubject) return [];
     return selectedSubject.topics.filter(topic =>
       topic.topicName.toLowerCase().includes(topicFilter.toLowerCase())
     );
   }, [selectedSubject, topicFilter]);
-
   const handleLevelSelect = (levelId: string) => {
     setSelectedLevelId(levelId);
     setSelectedSubjectId(null);
     setSubjectFilter('');
     setTopicFilter('');
   };
-
   const handleSubjectSelect = (subjectId: string) => {
     setSelectedSubjectId(subjectId);
     setTopicFilter('');
   };
-  
   const getTopicLink = (levelId: string, subjectId: string, topic: Topic) => {
     if (topic.diagrams.length === 1) {
       return `/${levelId}/${subjectId}/${topic.diagrams[0].diagramId}`;
     }
     return `/topics#${levelId}-${subjectId}`;
   };
-
   return (
     <div className="flex flex-col md:flex-row gap-6">
       <Column title="1. Select Level">
@@ -171,7 +151,6 @@ export default function TopicNavigator({ initialData }: TopicNavigatorProps) {
             ))}
         </ul>
       </Column>
-
       <AnimatePresence>
         {selectedLevel && (
           <Column title="2. Select Subject">
@@ -196,7 +175,6 @@ export default function TopicNavigator({ initialData }: TopicNavigatorProps) {
           </Column>
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {selectedSubject && (
           <Column title="3. Select Topic">

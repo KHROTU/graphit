@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearch } from '@/lib/context/SearchContext';
@@ -10,7 +9,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Fuse from 'fuse.js';
 import type { Diagram } from '@/lib/content';
-
 const useDebounce = (value: string, delay: number) => {  
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -23,7 +21,6 @@ const useDebounce = (value: string, delay: number) => {
   }, [value, delay]);
   return debouncedValue;
 };
-
 const ResultCard = ({ item, onNavigate }: { item: Diagram, onNavigate: () => void }) => {
   return (
     <motion.div 
@@ -63,14 +60,12 @@ const ResultCard = ({ item, onNavigate }: { item: Diagram, onNavigate: () => voi
     </motion.div>
   );
 };
-
 interface AnalyticsData {
   [diagramId: string]: {
     views?: number;
     ratings?: number[];
   };
 }
-
 export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] }) {
   const { isOpen, closeSearch } = useSearch();
   const [query, setQuery] = useState('');
@@ -78,7 +73,6 @@ export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] 
   const [results, setResults] = useState<Diagram[]>([]);
   const [enrichedDiagrams, setEnrichedDiagrams] = useState<Diagram[]>(allDiagrams);
   const debouncedQuery = useDebounce(query, 300);
-
   useEffect(() => {
     if (isOpen) {
       try {
@@ -87,17 +81,14 @@ export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] 
           setEnrichedDiagrams(allDiagrams);
           return;
         }
-
         const analytics: AnalyticsData = JSON.parse(rawData);
         const mergedDiagrams = allDiagrams.map(diagram => {
           const dynamicData = analytics[diagram.id];
           if (!dynamicData) return diagram;
-
           const newRatingCount = dynamicData.ratings?.length || 0;
           const newAverageRating = newRatingCount > 0
             ? dynamicData.ratings!.reduce((a, b) => a + b, 0) / newRatingCount
             : 0;
-          
           return {
             ...diagram,
             usage: (diagram.usage || 0) + (dynamicData.views || 0),
@@ -112,20 +103,16 @@ export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] 
       }
     }
   }, [isOpen, allDiagrams]);
-
   const fuse = useMemo(() => new Fuse(enrichedDiagrams, {
     keys: ['name', 'description', 'subject', 'level'],
     threshold: 0.4,
   }), [enrichedDiagrams]);
-  
   const globalMeanRating = useMemo(() => {
     const total = enrichedDiagrams.reduce((acc, d) => acc + (d.rating || 0) * (d.ratingCount || 0), 0);
     const count = enrichedDiagrams.reduce((acc, d) => acc + (d.ratingCount || 0), 0);
     return count > 0 ? total / count : 3.5;
   }, [enrichedDiagrams]);
-  
   const m = 10;
-
   useEffect(() => {
     let searchResult: Diagram[] = [];
     if (debouncedQuery.trim()) {
@@ -133,7 +120,6 @@ export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] 
     } else {
       searchResult = [...enrichedDiagrams];
     }
-
     if (filter === 'popular') {
       searchResult.sort((a, b) => {
         const scoreA = ((a.rating || 0) * (a.ratingCount || 0) + globalMeanRating * m) / ((a.ratingCount || 0) + m);
@@ -143,16 +129,13 @@ export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] 
     } else if (filter === 'used') {
       searchResult.sort((a, b) => (b.usage || 0) - (a.usage || 0));
     }
-    
     setResults(searchResult);
   }, [debouncedQuery, filter, enrichedDiagrams, fuse, globalMeanRating]);
-
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => setQuery(''), 300);
     }
   }, [isOpen]);
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -182,13 +165,11 @@ export default function SearchOverlay({ allDiagrams }: { allDiagrams: Diagram[] 
               </div>
               <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" onClick={closeSearch}><X/></Button>
             </div>
-
             <div className="flex-shrink-0 flex items-center gap-2 py-4 border-b border-neutral-dark/30">
                 <Button variant={filter === 'relevance' ? 'default' : 'ghost'} onClick={() => setFilter('relevance')}><Zap className="mr-2 h-4 w-4"/> Relevance</Button>
                 <Button variant={filter === 'popular' ? 'default' : 'ghost'} onClick={() => setFilter('popular')}><Star className="mr-2 h-4 w-4"/> Most Popular</Button>
                 <Button variant={filter === 'used' ? 'default' : 'ghost'} onClick={() => setFilter('used')}><TrendingUp className="mr-2 h-4 w-4"/> Most Used</Button>
             </div>
-
             <div className="flex-grow overflow-y-auto py-6">
               {results.length > 0 ? (
                 <motion.div 

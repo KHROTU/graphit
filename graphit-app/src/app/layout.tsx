@@ -12,10 +12,8 @@ import { SessionProvider } from "@/lib/context/SessionContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import AnalyticsSync from "@/components/shared/AnalyticsSync";
-
 const geistSans = GeistSans;
 const geistMono = GeistMono;
-
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.graphit.dev'),
   title: {
@@ -47,10 +45,8 @@ export const metadata: Metadata = {
     images: ['/social/default-og-image.png'],
   },
 };
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const allDiagrams = await getAllDiagrams();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning={true}>

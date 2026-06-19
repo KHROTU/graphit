@@ -1,15 +1,12 @@
 import { getTopicStructure } from '@/lib/content';
 import TopicNavigator from '@/components/topics/TopicNavigator';
 import Feedback from '@/components/topics/Feedback';
-
 export const metadata = {
   title: 'Explore Topics | GraphIt!',
   description: 'Select an academic level, subject, and topic to start creating diagrams.',
 };
-
 export default async function TopicsPage() {
   const topicStructure = await getTopicStructure();
-
   return (
     <>
       <div className="py-12">
@@ -21,7 +18,6 @@ export default async function TopicsPage() {
             Select a level, then a subject, then a topic to begin.
           </p>
         </div>
-        
         <TopicNavigator initialData={topicStructure} />
       </div>
       <Feedback />

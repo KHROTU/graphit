@@ -4,5 +4,8 @@
   },
   "scripts": {
     "generate-previews": "node generate-previews.mjs"
+  },
+  "dependencies": {
+    "glob": "^13.0.6"
   }
 }

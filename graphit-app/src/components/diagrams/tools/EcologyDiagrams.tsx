@@ -1,24 +1,21 @@
 'use client';
-
 import React, { useState, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Save, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useExportModal } from '@/lib/context/ExportModalContext';
 import dynamic from 'next/dynamic';
 import { SliderControl } from '../controls/SliderControl';
-import { ResistorInput } from '../controls/ResistorInput'; // Re-using for its structure
+import { ResistorInput } from '../controls/ResistorInput';
 import { SegmentControl } from '../controls/SegmentControl';
-
+import { DiagramToolbar } from '../DiagramToolbar';
+import { DiagramErrorBoundary } from '../DiagramErrorBoundary';
 const FoodWeb = dynamic(() => import('./FoodWeb'), { ssr: false, loading: () => <p className="text-center animate-pulse">Loading Food Web...</p>, });
-
 interface PyramidTier { id: number; label: string; value: number; }
-
 const PyramidDiagram = ({ data, textSize }: { data: PyramidTier[], textSize: number }) => {
   const width = 500, height = 300;
   const maxValue = useMemo(() => Math.max(...data.map(tier => tier.value), 100), [data]);
   const tierHeight = Math.min(40, (height - 20) / (data.length || 1));
-
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full text-text">
       {data.map((tier, i) => {
@@ -35,19 +32,15 @@ const PyramidDiagram = ({ data, textSize }: { data: PyramidTier[], textSize: num
     </svg>
   );
 };
-
 const PyramidEditor = ({ title }: { title: string }) => {
   const initialData = title === "Numbers"
     ? [{id: 1, label: 'Producer', value: 1000}, {id: 2, label: 'Primary C.', value: 100}, {id: 3, label: 'Secondary C.', value: 10}]
     : [{id: 1, label: 'Phytoplankton', value: 40}, {id: 2, label: 'Zooplankton', value: 100}];
-  
   const [tiers, setTiers] = useState<PyramidTier[]>(initialData);
   const [textSize, setTextSize] = useState(14);
-  
   const updateTier = (id: number, field: 'label' | 'value', newValue: string | number) => { setTiers(tiers.map(tier => tier.id === id ? { ...tier, [field]: field === 'value' ? Math.max(0, Number(newValue)) : newValue } : tier )); };
   const addTier = () => { const newId = tiers.length > 0 ? Math.max(...tiers.map(t => t.id)) + 1 : 1; setTiers([...tiers, { id: newId, label: 'New Tier', value: 50 }]); };
   const removeTier = (id: number) => { setTiers(tiers.filter(tier => tier.id !== id)); };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
       <div className="md:col-span-1">
@@ -79,46 +72,55 @@ const PyramidEditor = ({ title }: { title: string }) => {
     </div>
   );
 };
-
 export default function EcologyDiagrams() {
   const [activeTab, setActiveTab] = useState('foodWeb');
+  const [resetKey, setResetKey] = useState(0);
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const { openExportModal } = useExportModal();
-
-  const diagrams: { [key: string]: { name: string, component: React.ReactNode } } = {
-    foodWeb: { name: 'Food Web', component: <FoodWeb showExport={false} /> },
-    pyramidNumbers: { name: 'Pyramid of Numbers', component: <PyramidEditor title="Numbers" /> },
-    pyramidBiomass: { name: 'Pyramid of Biomass', component: <PyramidEditor title="Biomass" /> },
+  const diagrams: Record<string, { name: string, component: React.ReactNode }> = {
+    foodWeb: { name: 'Food Web', component: <FoodWeb key={`foodweb-${resetKey}`} showExport={false} /> },
+    pyramidNumbers: { name: 'Pyramid of Numbers', component: <PyramidEditor key={`pyramid-numbers-${resetKey}`} title="Numbers" /> },
+    pyramidBiomass: { name: 'Pyramid of Biomass', component: <PyramidEditor key={`pyramid-biomass-${resetKey}`} title="Biomass" /> },
   };
-
-  const activeDiagramName = diagrams[activeTab].name;
-
+  const getDiagramState = () => ({
+    activeTab,
+    resetKey,
+  });
+  const handleReset = () => {
+    setActiveTab('foodWeb');
+    setResetKey(prev => prev + 1);
+  };
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-      <div className="md:col-span-1">
-        <Card>
-          <CardHeader><CardTitle>Diagram Type</CardTitle></CardHeader>
-          <div className="p-4 space-y-2">
-            <SegmentControl 
-              value={activeTab}
-              onValueChange={(val) => setActiveTab(val)}
-              options={[
-                  {value: 'foodWeb', label: 'Food Web'},
-                  {value: 'pyramidNumbers', label: 'Pyramid of Numbers'},
-                  {value: 'pyramidBiomass', label: 'Pyramid of Biomass'}
-              ]}
-            />
-          </div>
-          <div className="p-4 border-t border-neutral-dark/30">
-            <Button onClick={() => openExportModal(diagramContainerRef, activeDiagramName)} className="w-full">
-              <Save className="mr-2 h-4 w-4" /> Save & Export
-            </Button>
-          </div>
-        </Card>
+    <DiagramErrorBoundary diagramName="Ecology Diagrams">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader><CardTitle>Diagram Type</CardTitle></CardHeader>
+            <div className="p-4 space-y-2">
+              <SegmentControl 
+                value={activeTab}
+                onValueChange={(val) => setActiveTab(val)}
+                options={[
+                    {value: 'foodWeb', label: 'Food Web'},
+                    {value: 'pyramidNumbers', label: 'Pyramid of Numbers'},
+                    {value: 'pyramidBiomass', label: 'Pyramid of Biomass'}
+                ]}
+              />
+            </div>
+            <div className="p-4 border-t border-neutral-dark/30">
+              <DiagramToolbar
+                diagramName="Ecology Diagrams"
+                getDiagramState={getDiagramState}
+                onExport={() => openExportModal(diagramContainerRef, diagrams[activeTab].name)}
+                onReset={handleReset}
+              />
+            </div>
+          </Card>
+        </div>
+        <div className="md:col-span-3 min-h-[70vh]" ref={diagramContainerRef} data-testid="diagram-container">
+          {diagrams[activeTab].component}
+        </div>
       </div>
-      <div className="md:col-span-3 min-h-[70vh]" ref={diagramContainerRef} data-testid="diagram-container">
-        {diagrams[activeTab].component}
-      </div>
-    </div>
+    </DiagramErrorBoundary>
   );
 }
